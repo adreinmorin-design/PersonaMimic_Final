@@ -1,0 +1,51 @@
+{
+  "power_words": [
+    "Launch",
+    "Conversion",
+    "Magnet",
+    "Velocity",
+    "Signal",
+    "Profit",
+    "Hook",
+    "Offer"
+  ],
+  "headline_templates": [
+    "Turn {pain_point} into {outcome} for {audience}.",
+    "A {tone} way for {audience} to unlock {outcome}.",
+    "The fastest route from {pain_point} to {outcome}.",
+    "How {audience} can create {outcome} without more busywork.",
+    "Stop fighting {pain_point} and start building {outcome}.",
+    "Your shortcut to {outcome} in the {niche} space.",
+    "A sharper {niche} message that finally lands with {audience}.",
+    "From fuzzy offer to irresistible pitch in one focused session."
+  ],
+  "hook_templates": [
+    "Most {audience} do not have a traffic problem. They have a clarity problem.",
+    "If {pain_point}, your market is telling you exactly what needs to change.",
+    "The moment {audience} fix their message, {outcome} gets easier.",
+    "A stronger {niche} offer usually beats more content, more ads, and more guesswork.",
+    "The offer that feels obvious to buy almost always starts as a messy first draft.",
+    "When the pitch is clear, {audience} stop chasing and start converting."
+  ],
+  "cta_templates": [
+    "Open the generator, sharpen your pitch, and launch with momentum.",
+    "Use these outputs as your next landing page, email hook, or checkout headline.",
+    "Turn one rough idea into a week of conversion-ready assets.",
+    "If you want {outcome}, start with the words that make the offer click.",
+    "Build the message once, reuse it everywhere, and stop shipping bland offers."
+  ],
+  "bundle_templates": [
+    "Pair the generator with a swipe-file workshop for a premium upsell.",
+    "Bundle this with a landing page teardown for higher perceived value.",
+    "Add a niche-specific example pack tailored to {audience}.",
+    "Sell it as a fast-start kit with a seven-day launch checklist.",
+    "Wrap it into a mini consulting offer for founders who need hands-on positioning help."
+  ],
+  "bonus_templates": [
+    "30-second pitch script for warm DMs",
+    "Checkout headline pack tuned for {tone} offers",
+    "Follow-up email opener for buyers who clicked but did not purchase",
+    "Creator bio rewrite prompt that aligns with the new offer angle",
+    "Bonus worksheet: the three-bullet clarity reset for {audience}"
+  ]
+}

@@ -1,0 +1,53 @@
+[project]
+name = "personamimic-industrial"
+version = "1.0.0"
+description = "Autonomous Industrial Swarm for Micro-SaaS Production"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.27.0",
+    "python-dotenv>=1.0.1",
+    "faiss-cpu>=1.8.0",
+    "sentence-transformers>=2.5.1",
+    "cryptography>=42.0.5",
+    "pydantic>=2.6.3",
+    "aiofiles>=23.2.1",
+    "python-multipart>=0.0.9",
+    "ollama>=0.1.7",
+    "googlesearch-python>=1.2.3",
+    "requests>=2.31.0",
+    "sqlalchemy>=2.0.27",
+    "psutil>=5.9.8",
+    "beautifulsoup4>=4.12.3",
+    "scikit-learn>=1.4.1",
+    "pandas>=2.2.1",
+    "speechbrain>=0.5.16",
+    "torch>=2.2.1",
+    "torchaudio>=2.2.1",
+    "soundfile>=0.12.1",
+    "redis>=5.0.0",
+    "edge-tts>=6.1.0",
+    "sentry-sdk[fastapi]>=2.0.0",
+    "logfire>=0.40.0",
+    "openai-whisper>=20231117",
+    "chromadb>=0.4.24",
+    "langgraph>=0.0.30",
+    "langsmith>=0.1.0",
+    "langchain>=0.1.0",
+    "nats-py>=2.7.0",
+    "angr>=9.2.0",
+    "semgrep>=1.65.0",
+]
+
+[tool.uv]
+managed = true
+workspace = { members = ["backend"] }
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+python_files = "test_*.py"

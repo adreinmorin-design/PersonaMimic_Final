@@ -1,0 +1,32 @@
+{
+  "name": "codesmith_optimized_42",
+  "version": "1.0.0",
+  "description": "High-efficiency industrial tool for Automated Cybersecurity Auditing Tools",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dre-proprietary/codesmith_optimized_42.git"
+  },
+  "keywords": [
+    "cybersecurity",
+    "auditing",
+    "automation",
+    "saas"
+  ],
+  "author": "Dre Proprietary",
+  "license": "Proprietary",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "express": "^4.18.1",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.26.0",
+    "jest": "^27.5.1"
+  }
+}

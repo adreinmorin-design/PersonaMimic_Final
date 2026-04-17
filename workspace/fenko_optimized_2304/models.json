@@ -1,0 +1,77 @@
+/*
+ * Dre Proprietary
+ *
+ * Copyright (c) 2023 Dre Proprietary Inc.
+ * All rights reserved.
+ */
+
+{
+    "models": [
+        {
+            "id": 1,
+            "name": "PartA",
+            "description": "Model for reverse engineering part A of the industrial tool.",
+            "attributes": {
+                "material": "Steel",
+                "weight": 5.2,
+                "dimensions": {"length": 30, "width": 20, "height": 10}
+            },
+            "methods": [
+                {
+                    "name": "getWeight",
+                    "description": "Returns the weight of the part.",
+                    "code": "def getWeight(self): return self.weight"
+                },
+                {
+                    "name": "getVolume",
+                    "description": "Calculates and returns the volume of the part based on its dimensions.",
+                    "code": "def getVolume(self): return self.dimensions['length'] * self.dimensions['width'] * self.dimensions['height']"
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "name": "PartB",
+            "description": "Model for reverse engineering part B of the industrial tool.",
+            "attributes": {
+                "material": "Aluminum",
+                "weight": 4.5,
+                "dimensions": {"length": 25, "width": 18, "height": 8}
+            },
+            "methods": [
+                {
+                    "name": "getWeight",
+                    "description": "Returns the weight of the part.",
+                    "code": "def getWeight(self): return self.weight"
+                },
+                {
+                    "name": "getVolume",
+                    "description": "Calculates and returns the volume of the part based on its dimensions.",
+                    "code": "def getVolume(self): return self.dimensions['length'] * self.dimensions['width'] * self.dimensions['height']"
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "name": "PartC",
+            "description": "Model for reverse engineering part C of the industrial tool.",
+            "attributes": {
+                "material": "Bronze",
+                "weight": 6.0,
+                "dimensions": {"length": 28, "width": 15, "height": 9}
+            },
+            "methods": [
+                {
+                    "name": "getWeight",
+                    "description": "Returns the weight of the part.",
+                    "code": "def getWeight(self): return self.weight"
+                },
+                {
+                    "name": "getVolume",
+                    "description": "Calculates and returns the volume of the part based on its dimensions.",
+                    "code": "def getVolume(self): return self.dimensions['length'] * self.dimensions['width'] * self.dimensions['height']"
+                }
+            ]
+        }
+    ]
+}

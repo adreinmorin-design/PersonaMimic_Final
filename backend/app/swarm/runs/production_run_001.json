@@ -1,0 +1,31 @@
+{
+  "run_id": "PR-001",
+  "product_name": "Cyber-Factory Mission Control",
+  "archetypes": ["supabase_realtime", "appsmith_lowcode", "fastapi_backend"],
+  "objective": "Create a unified industrial monitoring solution with a 0ms-latency backend and a dense Appsmith low-code dashboard.",
+  "specs": {
+    "backend": {
+      "language": "go",
+      "framework": "pure_phoenix_2.0",
+      "features": ["heartbeat_sync", "postgres_cdc", "jwt_auth"],
+      "files": ["backend/main.go", "backend/realtime_client.go"]
+    },
+    "frontend": {
+      "type": "appsmith_layout",
+      "widgets": [
+        { "name": "SensorStatusTable", "type": "TABLE_WIDGET_V2" },
+        { "name": "LatencyGraph", "type": "CHART_WIDGET" },
+        { "name": "ControlPanel", "type": "CONTAINER_WIDGET" }
+      ],
+      "bindings": {
+        "SensorStatusTable.tableData": "{{ RealtimeService.messages.data }}",
+        "LatencyGraph.chartData": "{{ RealtimeService.latency_log.data }}"
+      }
+    }
+  },
+  "quality_gate": {
+    "min_forensic_score": 95,
+    "max_semgrep_findings": 0,
+    "performance_target_ms": 20
+  }
+}

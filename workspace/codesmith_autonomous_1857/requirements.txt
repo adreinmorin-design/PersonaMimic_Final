@@ -1,0 +1,212 @@
+# Dre Proprietary
+# Copyright (c) 2024 Dre Proprietary. All rights reserved.
+# 
+# NOTICE: This software is proprietary to Dre Proprietary.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Requirements for codesmith_autonomous_1857
+# High-performance tool for Personalized Micro-Learning for Remote Healthcare Workers
+
+# Core Dependencies
+django==4.1.7
+djangorestframework==3.14.0
+django-filter==22.1
+django-cors-headers==3.13.0
+
+# Database Dependencies
+psycopg2==2.9.5
+psycopg2-binary==2.9.5
+
+# Authentication Dependencies
+django-auth-ldap==4.1.0
+django-allauth==0.51.0
+
+# Micro-Learning Dependencies
+scikit-learn==1.2.0
+numpy==1.23.4
+pandas==1.5.2
+matplotlib==3.6.2
+seaborn==0.12.1
+
+# Logging Dependencies
+loguru==0.6.0
+python-json-logger==2.0.2
+
+# Error Handling Dependencies
+sentry-sdk==1.11.1
+django-sentry==1.1.0
+
+# Miscellaneous Dependencies
+python-dotenv==0.21.0
+django-environ==0.9.0
+django-storages==1.13.1
+boto3==1.29.144
+django-compressor==4.1.1
+
+# Development Dependencies
+debugpy==1.6.0
+django-debug-toolbar==3.7.0
+django-extensions==3.2.1
+ipython==8.6.0
+
+# Testing Dependencies
+pytest==7.2.0
+pytest-django==4.5.2
+pytest-cov==4.0.0
+factory-boy==3.2.1
+freezegun==1.2.2
+
+# Security Dependencies
+django-axes==10.0.1
+django-two-factor-auth==1.14.0
+django-otp==1.2.1
+cryptography==40.0.2
+
+# CI/CD Dependencies
+github-actions==0.2.0
+pre-commit==2.20.0
+black==23.3.0
+isort==5.12.0
+flake8==6.0.0
+mypy==0.991
+pyupgrade==3.2.0
+
+# Documentation Dependencies
+sphinx==6.1.0
+sphinx-autodoc-typehints==1.19.0
+sphinx-rtd-theme==1.0.0
+sphinxcontrib-log-cabinet==2.5.0
+
+# Linting Dependencies
+pylint==2.15.9
+pylint-django==2.7.1
+pylint-plugin-utils==0.7.1
+mccabe==0.7.0
+pyflakes==2.6.0
+bandit==1.7.5
+safety==2.11.0
+semgrep==0.96.0
+
+# Formatting Dependencies
+autopep8==2.0.1
+yapf==0.32.11
+docformatter==1.5.0
+pydocstyle==6.1.1
+reorder-python-imports==3.0.0
+
+# Code Analysis Dependencies
+radon==5.1.7
+pylint-exit==2.7.0
+pylint-venv==2.7.0
+pylint-parallel==1.3.0
+pylint-extensions==0.10.0
+pyroma==3.2.0
+pyup==0.0.17
+py-safety==2.11.0
+sourcery==0.18.0
+deepsource==0.9.0
+codefactor==0.10.0
+codebeat==2.0.0
+codeclimate==0.87.0
+codacy==1.2.0
+codepro==1.0.0
+gitchangelog==3.0.4
+commitlint==17.1.0
+prettier==2.7.1
+stylelint==14.11.0
+eslint==8.30.0
+typescript==4.9.4
+tslint==6.1.3
+tsfmt==3.3.3
+clang-format==14.0.6
+uncrustify==0.74.0
+cpplint==1.6.0
+pycpplint==0.1.1
+flake8-bugbear==22.12.29
+flake8-bandit==3.0.0
+flake8-builtins==2.0.1
+flake8-class-newline==0.1.0
+flake8-commas==2.0.0
+flake8-comprehensions==3.10.1
+flake8-debugger==4.0.0
+flake8-deprecated==1.0.0
+flake8-docstrings==1.6.0
+flake8-eradicate==1.2.0
+flake8-executable==1.3.0
+flake8-fixme==1.1.1
+flake8-formatting==5.0.0
+flake8-future==1.0.0
+flake8-import-conventions==0.2.0
+flake8-import-order==0.18.1
+flake8-logging-format==0.6.0
+flake8-mock==0.3.1
+flake8-mutable==1.2.0
+flake8-pep3101==2.1.1
+flake8-print==4.0.0
+flake8-quotes==3.3.1
+flake8-requirements==4.0.0
+flake8-rst==1.0.0
+flake8-runtime==5.1.0
+flake8-string-format==0.2.3
+flake8-tuple==0.9.1
+flake8-type-checking==0.1.1
+flake8-uses==0.5.0
+flake8-variables-names==0.2.0
+flake8-wildcard-import==0.4.0
+flake8-absolute-imports==1.0.0
+flake8-annotations==2.7.0
+flake8-annotations-extended==0.1.0
+flake8-assertive==1.0.0
+flake8-async==0.1.0
+flake8-broken-line==0.1.0
+flake8-bugbear==22.12.29
+flake8-builtins-extended==1.0.0
+flake8-copyright==1.9.1
+flake8-debug==0.1.0
+flake8-deprecated-unicode-literals==0.1.0
+flake8-django==0.9.0
+flake8-docstring-quotes==0.1.0
+flake8-duplicate-argument-values==0.1.0
+flake8-else==0.1.0
+flake8-eradicate-parameters==0.1.0
+flake8-executable-extensions==0.1.0
+flake8-expect-actual==0.1.0
+flake8-fixme-regex==0.1.0
+flake8-format==0.1.0
+flake8-function-name==0.1.0
+flake8-future-annotations==0.1.0
+flake8-future-import==0.1.0
+flake8-future-strings==0.1.0
+flake8-future-typing==0.1.0
+flake8-github==0.1.0
+flake8-implicit-str-concat==0.1.0
+flake8-import-order-style==0.1.0
+flake8-implicit-else==0.1.0
+flake8-implicit-str==0.1.0
+flake8-implicit-tuple==0.1.0
+flake8-import-alias==0.1.0
+flake8-import-order-extensions==0.1.0
+flake8-imports==0.1.0
+flake8-index==0.1.0
+flake8-isort==4.2.1
+flake8-logging==0.1.0
+flake8-mock-asserts==0.1.0
+flake8-mock-kwargs==0.1.0
+flake8-mock-objects==0.1.0
+flake8-mock-stdlib==0.1.0
+flake8-mutable==0.1.0
+flake8-naming-styles==0.1.0
+flake8-no-except-pass==0.1.0
+flake8-no-implicit-bool==0.1.0
+flake8-no-implicit-str==0.1.0
+flake8-no-implicit-tuple==0.1.0
+flake8-no-import==0.1.0
+flake8-no-obsolete-typing==0.1.0
+flake8-no-pep-3132==0.1.0

@@ -1,0 +1,48 @@
+# Copyright 2023 Dre Proprietary
+# All rights reserved.
+
+# This software is provided under a proprietary license and may not be used,
+# copied, modified, or distributed without explicit written permission from Dre.
+
+Flask==2.3.1
+flask-restful==0.3.9
+flask-cors==3.0.10
+numpy==1.24.2
+pandas==1.5.3
+scikit-learn==1.2.2
+joblib==1.2.0
+requests==2.28.1
+PyJWT==2.6.0
+flask-marshmallow==0.17.0
+marshmallow-sqlalchemy==0.24.0
+SQLAlchemy==1.4.39
+alembic==1.10.2
+Flask-SQLAlchemy==2.5.1
+Flask-Migrate==3.1.0
+flask-login==0.6.1
+flask-bcrypt==0.7.1
+flask-mail==0.9.1
+flask-socketio==5.1.2
+eventlet==0.38.4
+redis==3.6.1
+psycopg2-binary==2.9.6
+gunicorn==20.1.0
+Flask-Caching==1.10.1
+Flask-WTF==1.0.0
+WTForms==3.0.1
+flask-mongoengine==0.10.0
+mongoengine==0.27.4
+bcrypt==4.0.1
+pydantic==1.10.6
+marshmallow==3.18.0
+Flask-Testing==0.8.1
+pytest==7.2.1
+coverage==7.2.2
+flake8==5.0.4
+black==23.3.0
+pre-commit==2.20.0
+Sphinx==6.2.1
+sphinx-rtd-theme==1.0.0
+pylint==2.12.2
+mypy==0.991
+flake8-bugbear==23.3.3

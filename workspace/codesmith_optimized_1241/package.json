@@ -1,0 +1,66 @@
+{
+  "name": "codesmith_optimized_1241",
+  "version": "1.0.0",
+  "description": "High-efficiency industrial tool for Analytics and Reporting Dashboards",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint .",
+    "prepublish": "npm run build"
+  },
+  "keywords": [
+    "Analytics",
+    "Reporting",
+    "Dashboards",
+    "Industrial",
+    "Tool"
+  ],
+  "author": "Dre Proprietary",
+  "license": "MIT",
+  "dependencies": {
+    "@types/node": "^18.0.0",
+    "body-parser": "^1.20.0",
+    "express": "^4.18.1",
+    "express-jwt": "^8.3.0",
+    "jsonwebtoken": "^9.2.2",
+    "mysql2": "^2.3.3",
+    "swagger-ui-express": "^4.1.7"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.20.0",
+    "@types/express": "^4.18.1",
+    "@types/jsonwebtoken": "^9.0.0",
+    "@types/mysql2": "^2.3.3",
+    "@types/swagger-ui-express": "^4.1.7",
+    "eslint": "^8.24.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "jest": "^29.9.0",
+    "prettier": "^2.7.1",
+    "ts-jest": "^29.0.2",
+    "typescript": "^4.7.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DreProprietary/codesmith_optimized_1241.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DreProprietary/codesmith_optimized_1241/issues"
+  },
+  "homepage": "https://github.com/DreProprietary/codesmith_optimized_1241#readme",
+  "keywords": [
+    "Analytics",
+    "Reporting",
+    "Dashboards",
+    "Industrial",
+    "Tool"
+  ],
+  "directories": {
+    "test": "tests"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "private": true
+}

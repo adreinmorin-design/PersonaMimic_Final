@@ -1,0 +1,38 @@
+{
+  "name": "dre_autonomous_1824",
+  "version": "1.0.0",
+  "description": "High-performance tool for Autonomous Data-Sovereignty Audit for Solo AI SaaS.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest --verbose",
+    "lint": "eslint . --ext js,jsx"
+  },
+  "author": "Dre Proprietary",
+  "license": "Proprietary",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.3",
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.18.5",
+    "@babel/preset-env": "^7.18.2",
+    "eslint": "^8.14.0",
+    "jest": "^27.4.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dre-proprietary/dre_autonomous_1824.git"
+  },
+  "keywords": [
+    "autonomy",
+    "data sovereignty",
+    "audit",
+    "solo ai"
+  ],
+  "bugs": {
+    "url": "https://github.com/dre-proprietary/dre_autonomous_1824/issues"
+  }
+}

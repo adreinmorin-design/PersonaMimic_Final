@@ -1,0 +1,27 @@
+{
+  "name": "dre_autonomous_1837",
+  "version": "1.0.0",
+  "description": "High-performance tool for Autonomous Data-Sovereignty Audit for Solo AI SaaS",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "Dre Proprietary",
+  "license": "Proprietary",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.3",
+    "request-promise-native": "^1.0.5"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dre-proprietary/dre_autonomous_1837.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dre-proprietary/dre_autonomous_1837/issues"
+  },
+  "homepage": "https://dre-proprietary.github.io/dre_autonomous_1837/"
+}

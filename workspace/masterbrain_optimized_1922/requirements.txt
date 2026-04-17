@@ -1,0 +1,52 @@
+# Dre Proprietary
+# Copyright 2023 Masterbrain Optimized 1922
+# All rights reserved.
+
+# Requirements for Masterbrain Optimized 1922
+masterbrain_optimized_1922==1.0.0
+
+# Python Standard Library
+python==3.10.0
+
+# Frameworks and Libraries
+fastapi==0.92.0
+uvicorn==0.17.6
+sqlalchemy==1.4.32
+sqlalchemy-utils==0.37.0
+pydantic==1.9.1
+python-multipart==0.0.5
+python-jose==3.3.0
+cryptography==3.4.7
+pytz==2022.1
+loguru==0.7.0
+python-dotenv==0.20.0
+pyyaml==6.0
+
+# Database Drivers
+mysqlclient==2.1.0
+psycopg2-binary==2.9.3
+
+# Testing Frameworks
+pytest==7.1.2
+pytest-cov==2.12.1
+pytest-mock==3.10.0
+pytest-xdist==2.45.0
+
+# Type Hinting and Code Analysis
+mypy==0.991
+pylint==2.14.5
+pytype==2022.11.01
+
+# Code Formatting and Linting
+black==22.3.0
+isort==5.10.1
+flake8==4.0.1
+
+# Documentation Generation
+sphinx==4.5.0
+sphinx-rtd-theme==1.0.0
+sphinx-autodoc-typehints==1.20.0
+
+# Other Dependencies
+requests==2.28.1
+six==1.16.0

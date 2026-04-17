@@ -1,0 +1,58 @@
+{
+  "protocol_name": "Phoenix Channels 2.0.0 (Supabase Realtime)",
+  "transport": "WebSocket",
+  "serialization": "JSON",
+  "heartbeat": {
+    "topic": "phoenix",
+    "event": "heartbeat",
+    "payload": {},
+    "interval_ms": 25000
+  },
+  "join_message": {
+    "topic": "realtime:any",
+    "event": "phx_join",
+    "payload": {
+      "config": {
+        "broadcast": { "self": false },
+        "presence": { "key": "" },
+        "postgres_changes": []
+      }
+    }
+  },
+  "event_structures": {
+    "broadcast": {
+      "topic": "realtime:<channel>",
+      "event": "broadcast",
+      "payload": {
+        "type": "broadcast",
+        "event": "<event_name>",
+        "payload": {}
+      }
+    },
+    "presence": {
+      "topic": "realtime:<channel>",
+      "event": "presence",
+      "payload": {
+        "type": "presence",
+        "event": "sync",
+        "payload": {}
+      }
+    },
+    "postgres_changes": {
+      "topic": "realtime:<channel>",
+      "event": "postgres_changes",
+      "payload": {
+        "type": "postgres_changes",
+        "event": "*",
+        "schema": "*",
+        "table": "*",
+        "commit_timestamp": ""
+      }
+    }
+  },
+  "authentication": {
+    "method": "JWT",
+    "connection_param": "apikey",
+    "refresh_event": "access_token"
+  }
+}

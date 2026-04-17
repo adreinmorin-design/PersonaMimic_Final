@@ -1,0 +1,58 @@
+BUILTIN_AGENT_TARGETS: list[dict[str, object]] = [
+    {
+        "target_id": "openhands",
+        "name": "OpenHands",
+        "description": "Open-source software engineering agent for autonomous app-building workflows.",
+        "source_repo_url": "https://github.com/All-Hands-AI/OpenHands",
+        "aliases": ["open hands", "all-hands-ai", "openhands agent"],
+    },
+    {
+        "target_id": "crewai",
+        "name": "CrewAI",
+        "description": "Multi-agent framework for orchestrating digital product production workflows.",
+        "source_repo_url": "https://github.com/crewAIInc/crewAI",
+        "aliases": ["crew ai", "crewai framework", "crewai agents"],
+    },
+    {
+        "target_id": "metagpt",
+        "name": "MetaGPT",
+        "description": "Role-based autonomous software company framework for app and product creation.",
+        "source_repo_url": "https://github.com/FoundationAgents/MetaGPT",
+        "aliases": ["meta gpt", "metagpt framework", "metagpt agent"],
+    },
+    {
+        "target_id": "autogpt",
+        "name": "AutoGPT",
+        "description": "Autonomous GPT agent platform for task planning and digital product automation.",
+        "source_repo_url": "https://github.com/Significant-Gravitas/AutoGPT",
+        "aliases": ["auto gpt", "autogpt agent"],
+    },
+    {
+        "target_id": "superagi",
+        "name": "SuperAGI",
+        "description": "Agent platform for building autonomous software and app-production pipelines.",
+        "source_repo_url": "https://github.com/TransformerOptimus/SuperAGI",
+        "aliases": ["super agi", "superagi agent"],
+    },
+    {
+        "target_id": "gpt-engineer",
+        "name": "GPT Engineer",
+        "description": "Open-source coding agent that scaffolds and iterates full application codebases.",
+        "source_repo_url": "https://github.com/gpt-engineer-org/gpt-engineer",
+        "aliases": ["gpt engineer", "gpt-engineer agent"],
+    },
+    {
+        "target_id": "devika",
+        "name": "Devika",
+        "description": "Open-source software engineering agent focused on code generation and project execution.",
+        "source_repo_url": "https://github.com/stitionai/devika",
+        "aliases": ["devika ai", "devika agent"],
+    },
+    {
+        "target_id": "swe-agent",
+        "name": "SWE-agent",
+        "description": "Autonomous software engineering agent for repository-level issue solving and implementation.",
+        "source_repo_url": "https://github.com/SWE-agent/SWE-agent",
+        "aliases": ["swe agent", "sweagent"],
+    },
+]

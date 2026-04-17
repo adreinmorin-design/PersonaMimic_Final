@@ -1,0 +1,46 @@
+{
+  "copyright": {
+    "year": 2023,
+    "holder": "Dre Proprietary"
+  },
+  "project_name": "fenko_autonomous_1829",
+  "description": "High-performance tool for Autonomous Data-Sovereignty Audit for Solo AI SaaS",
+  "version": "1.0.0",
+  "author": {
+    "name": "Dre Proprietary",
+    "email": "info@dreproprietary.com"
+  },
+  "dependencies": [
+    "requests>=2.28.1",
+    "pandas>=1.4.3",
+    "numpy>=1.21.6",
+    "flask>=2.1.2",
+    "sqlalchemy>=1.4.32",
+    "pydantic>=1.9.1"
+  ],
+  "configurations": {
+    "database": {
+      "type": "sqlite",
+      "path": "./data/fenko.db",
+      "autocommit": true
+    },
+    "logging": {
+      "level": "DEBUG",
+      "file": "./logs/app.log",
+      "console": true
+    },
+    "api": {
+      "host": "0.0.0.0",
+      "port": 5000,
+      "debug": false
+    }
+  },
+  "security": {
+    "encryption_key": "ThisIsASecureKey1234567890",
+    "token_secret": "AUniqueTokenSecretForThisProject"
+  },
+  "audit_settings": {
+    "interval": 60,
+    "threshold": 50
+  }
+}

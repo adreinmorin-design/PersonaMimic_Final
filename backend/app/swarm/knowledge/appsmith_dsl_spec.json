@@ -1,0 +1,56 @@
+{
+  "specification_name": "Appsmith Widget DSL v2",
+  "grid_system": {
+    "columns": 64,
+    "row_height": 10,
+    "coordinate_properties": ["topRow", "bottomRow", "leftColumn", "rightColumn"]
+  },
+  "binding_syntax": "{{ <javascript_logic> }}",
+  "base_widget": {
+    "widgetName": "MainContainer",
+    "type": "CONTAINER_WIDGET",
+    "children": []
+  },
+  "widget_library": {
+    "TEXT_WIDGET": {
+      "type": "TEXT_WIDGET",
+      "props": {
+        "text": "Default Text",
+        "fontSize": "1rem",
+        "fontStyle": "BOLD",
+        "textAlign": "LEFT"
+      }
+    },
+    "TABLE_WIDGET_V2": {
+      "type": "TABLE_WIDGET_V2",
+      "props": {
+        "tableData": "{{ [] }}",
+        "columnOrder": [],
+        "primaryColumns": {}
+      }
+    },
+    "CHART_WIDGET": {
+      "type": "CHART_WIDGET",
+      "props": {
+        "chartType": "LINE_CHART",
+        "chartData": [],
+        "xAxisName": "Time",
+        "yAxisName": "Value"
+      }
+    },
+    "CONTAINER_WIDGET": {
+      "type": "CONTAINER_WIDGET",
+      "props": {
+        "backgroundColor": "#FFFFFF",
+        "children": []
+      }
+    }
+  },
+  "industrial_patterns": {
+    "realtime_binding": "json_as_ui://{{ RealtimeService.messages.data }}",
+    "monitoring_dashboard": {
+      "layout": "GRID_COMPACT",
+      "refresh_rate": "STREAMING"
+    }
+  }
+}

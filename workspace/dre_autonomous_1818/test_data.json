@@ -1,0 +1,50 @@
+{
+    "dre_autonomous_1818": {
+        "test_data.json": {
+            "copyright": "Dre Proprietary",
+            "version": "1.0.0",
+            "data": [
+                {
+                    "audit_id": 1,
+                    "customer_name": "Customer A",
+                    "audit_date": "2023-10-01",
+                    "data_sovereignty_status": "Pass",
+                    "autonomy_level": 4,
+                    "risk_score": 85
+                },
+                {
+                    "audit_id": 2,
+                    "customer_name": "Customer B",
+                    "audit_date": "2023-10-02",
+                    "data_sovereignty_status": "Fail",
+                    "autonomy_level": 2,
+                    "risk_score": 65
+                },
+                {
+                    "audit_id": 3,
+                    "customer_name": "Customer C",
+                    "audit_date": "2023-10-03",
+                    "data_sovereignty_status": "Pass",
+                    "autonomy_level": 5,
+                    "risk_score": 90
+                },
+                {
+                    "audit_id": 4,
+                    "customer_name": "Customer D",
+                    "audit_date": "2023-10-04",
+                    "data_sovereignty_status": "Pass",
+                    "autonomy_level": 3,
+                    "risk_score": 75
+                },
+                {
+                    "audit_id": 5,
+                    "customer_name": "Customer E",
+                    "audit_date": "2023-10-05",
+                    "data_sovereignty_status": "Fail",
+                    "autonomy_level": 1,
+                    "risk_score": 60
+                }
+            ]
+        }
+    }
+}

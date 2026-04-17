@@ -1,0 +1,32 @@
+{
+  "name": "fenko_autonomous_1889",
+  "version": "1.0.0",
+  "description": "High-performance tool for Elderly-Friendly Voice-Controlled Home Automation for Small, Rural, and Low-Income Communities.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest --verbose"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.3",
+    "google-cloud-text-to-speech": "^5.0.0",
+    "node-fetch": "^2.6.7",
+    "nodemon": "^2.0.15"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.18.6",
+    "@babel/preset-env": "^7.18.6",
+    "jest": "^27.4.7"
+  },
+  "author": "Dre Proprietary",
+  "license": "Proprietary",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DreProprietary/fenko_autonomous_1889.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DreProprietary/fenko_autonomous_1889/issues"
+  }
+}

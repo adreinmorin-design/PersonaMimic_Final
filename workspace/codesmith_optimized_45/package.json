@@ -1,0 +1,48 @@
+{
+  /**
+   * @copyright Dre Proprietary
+   * @license MIT
+   * @author Codesmith Optimized 45
+   * @description Package configuration for codesmith_optimized_45 SaaS project
+   */
+
+  "name": "codesmith_optimized_45",
+  "version": "1.0.0",
+  "description": "High-efficiency industrial tool for SaaS Boilerplate Components",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest",
+    "lint": "eslint .",
+    "build": "webpack"
+  },
+  "keywords": [],
+  "author": "Codesmith Optimized 45",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mongodb": "^3.6.4",
+    "mongoose": "^5.12.3",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.25.0",
+    "jest": "^27.0.6",
+    "webpack": "^5.51.1",
+    "webpack-cli": "^4.9.1"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testPathIgnorePatterns": [
+      "/node_modules/"
+    ]
+  },
+  "eslintConfig": {
+    "extends": "eslint:recommended",
+    "parserOptions": {
+      "ecmaVersion": 12
+    }
+  }
+}

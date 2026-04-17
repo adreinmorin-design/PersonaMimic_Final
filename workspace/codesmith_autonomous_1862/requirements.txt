@@ -1,0 +1,76 @@
+# Dre Proprietary
+# Copyright (c) 2024 Dre Proprietary. All rights reserved.
+# 
+# Elderly-Friendly Virtual Reality Therapy for Chronic Pain Management
+# 
+# requirements.txt
+
+# Core Dependencies
+numpy==1.23.4
+pandas==1.5.2
+scikit-learn==1.2.0
+scipy==1.9.3
+PyOpenGL==3.1.6
+PyOpenGL-accelerate==3.1.6
+pygame==2.1.2
+pyqt5==5.15.7
+pyqtwebengine==5.15.5
+
+# Virtual Reality Dependencies
+openvr==1.18.9
+pyopenvr==1.18.9
+vpython==7.6.1
+
+# Machine Learning Dependencies
+tensorflow==2.11.0
+keras==2.11.0
+torch==2.0.0
+torchaudio==0.13.0
+torchvision==0.15.0
+
+# Data Storage Dependencies
+sqlalchemy==2.0.4
+pandas-datareader==0.10.0
+psycopg2==2.9.5
+
+# Logging Dependencies
+loguru==0.6.0
+python-json-logger==2.0.2
+
+# Error Handling Dependencies
+tenacity==8.2.2
+backoff==1.11.1
+
+# Testing Dependencies
+pytest==7.2.0
+pytest-cov==4.0.0
+pytest-mock==3.10.0
+
+# Documentation Dependencies
+sphinx==6.1.3
+sphinx-autodoc-typehints==1.19.0
+sphinx-rtd-theme==1.1.1
+
+# Miscellaneous Dependencies
+python-dotenv==0.21.0
+requests==2.28.2
+beautifulsoup4==4.11.1
+lxml==4.9.2
+
+# Domain-Driven Design (DDD) Dependencies
+domain-model==0.2.1
+value-object==0.2.0
+
+# Clean, Modular, and Readable Code Dependencies
+autopep8==2.0.1
+isort==5.12.0
+mypy==1.2.0
+pylint==2.15.5
+
+# Robust Error Handling and Explicit Logging Tracing Dependencies
+structlog==22.2.0
+loggly==2.5.1
+sentry-sdk==1.11.1
+
+# Dre Proprietary
+# Copyright (c) 2024 Dre Proprietary. All rights reserved.

@@ -1,0 +1,46 @@
+# Copyright (c) Dre Proprietary
+# Licensed under the MIT License
+
+# Requirements for fenko_optimized_1796
+
+# Core Libraries
+numpy==1.23.4
+pandas==1.4.3
+scipy==1.9.3
+matplotlib==3.5.1
+seaborn==0.11.2
+scikit-learn==1.1.2
+statsmodels==0.13.5
+
+# API Monitoring Libraries
+requests==2.28.1
+urllib3==1.26.9
+pycurl==1.25.0
+pyOpenSSL==22.0.0
+
+# Logging and Tracing Libraries
+loguru==0.7.0
+structlog==21.1.0
+tenacity==8.1.0
+
+# Database Libraries
+pymongo==3.12.4
+pymongo[srv]==3.12.4
+pymongo[snappy]==3.12.4
+pymongo[twisted_sasl]==3.12.4
+
+# Security Libraries
+cryptography==38.0.4
+pycryptodome==3.10.1
+
+# Testing Libraries
+pytest==7.1.2
+pytest-cov==2.12.1
+pytest-mock==3.10.0
+pytest-xdist==2.45.1
+
+# Development Libraries
+black==22.8.0
+isort==5.10.1
+flake8==5.0.4
+mypy==0.991

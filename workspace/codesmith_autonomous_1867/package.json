@@ -1,0 +1,33 @@
+{
+  /**
+   * @copyright Dre Proprietary
+   * @license MIT
+   * @description Package configuration for codesmith_autonomous_1867
+   */
+  "name": "codesmith_autonomous_1867",
+  "version": "1.0.0",
+  "description": "High-performance tool for Personalized Micro-Learning for Remote Healthcare Professionals",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest",
+    "lint": "eslint .",
+    "build": "webpack"
+  },
+  "keywords": [],
+  "author": "Dre Proprietary",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mongodb": "^3.6.4",
+    "mongoose": "^5.12.3",
+    "jsonwebtoken": "^8.5.1",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "jest": "^27.4.5",
+    "eslint": "^7.32.0",
+    "webpack": "^5.64.1",
+    "webpack-cli": "^4.9.2"
+  }
+}

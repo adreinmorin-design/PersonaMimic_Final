@@ -1,0 +1,77 @@
+{
+  "copyright": {
+    "year": 2023,
+    "holder": "Dre Proprietary"
+  },
+  "projectName": "codesmith_autonomous_1836",
+  "version": "1.0.0",
+  "description": "High-performance tool for Autonomous Data-Sovereignty Audit for Solo AI SaaS",
+  "author": {
+    "name": "Dre Proprietary",
+    "email": "info@dreproprietary.com"
+  },
+  "dependencies": [
+    {
+      "name": "requests",
+      "version": "2.28.1"
+    },
+    {
+      "name": "pandas",
+      "version": "1.5.3"
+    },
+    {
+      "name": "numpy",
+      "version": "1.23.5"
+    },
+    {
+      "name": "flask",
+      "version": "2.3.2"
+    }
+  ],
+  "configurations": {
+    "auditSettings": {
+      "dataSources": [
+        {
+          "type": "database",
+          "connectionString": "sqlite:///data.db"
+        },
+        {
+          "type": "api",
+          "url": "https://api.example.com/data"
+        }
+      ],
+      "auditFrequency": "daily",
+      "reportingEnabled": true,
+      "reportFormat": "html"
+    },
+    "loggingSettings": {
+      "level": "DEBUG",
+      "file": "audit.log",
+      "console": true
+    },
+    "securitySettings": {
+      "encryptionKey": "verysecretkey1234567890",
+      "authEnabled": true,
+      "allowedOrigins": ["http://localhost:3000", "https://example.com"]
+    }
+  },
+  "environmentVariables": {
+    "API_KEY": "REPLACE_WITH_YOUR_API_KEY",
+    "DATABASE_URL": "sqlite:///data.db"
+  },
+  "scripts": [
+    {
+      "name": "start",
+      "command": "python app.py"
+    },
+    {
+      "name": "test",
+      "command": "pytest tests/"
+    }
+  ],
+  "documentation": {
+    "url": "https://dreproprietary.github.io/codesmith_autonomous_1836/",
+    "version": "v1.0.0"
+  },
+  "license": "Proprietary"
+}

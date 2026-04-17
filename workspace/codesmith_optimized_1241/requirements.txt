@@ -1,0 +1,31 @@
+# Frameworks
+django==4.1.7
+djangorestframework==3.14.0
+django-filter==22.1
+django-cors-headers==3.13.0
+
+# Database
+psycopg2==2.9.5
+psycopg2-binary==2.9.5
+
+# Analytics and Reporting
+pandas==1.5.2
+numpy==1.23.4
+matplotlib==3.6.2
+seaborn==0.12.1
+scipy==1.9.3
+
+# Logging and Error Handling
+loguru==0.6.0
+structlog==22.6.0
+
+# API Documentation
+drf-yasg==1.21.5
+
+# Security
+django-axes==5.16.0
+django-csp==3.15.0
+
+# Utilities
+python-dotenv==0.21.0
+python-decouple==3.6

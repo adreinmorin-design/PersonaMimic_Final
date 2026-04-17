@@ -1,0 +1,78 @@
+{
+  "page_name": "Mission Control",
+  "archetype": "appsmith_lowcode",
+  "dsl": {
+    "widgetName": "MainContainer",
+    "type": "CONTAINER_WIDGET",
+    "topRow": 0,
+    "bottomRow": 120,
+    "leftColumn": 0,
+    "rightColumn": 64,
+    "children": [
+      {
+        "widgetName": "HeaderContainer",
+        "type": "CONTAINER_WIDGET",
+        "topRow": 0,
+        "bottomRow": 12,
+        "leftColumn": 0,
+        "rightColumn": 64,
+        "props": { "backgroundColor": "#1A1A1A" },
+        "children": [
+          {
+            "widgetName": "TitleText",
+            "type": "TEXT_WIDGET",
+            "topRow": 3,
+            "bottomRow": 9,
+            "leftColumn": 2,
+            "rightColumn": 30,
+            "props": {
+              "text": "🏭 CYBER-FACTORY MISSION CONTROL",
+              "fontSize": "1.5rem",
+              "textColor": "#00FF00"
+            }
+          }
+        ]
+      },
+      {
+        "widgetName": "SensorStreamTable",
+        "type": "TABLE_WIDGET_V2",
+        "topRow": 14,
+        "bottomRow": 60,
+        "leftColumn": 0,
+        "rightColumn": 40,
+        "props": {
+          "tableData": "{{ RealtimeService.messages.data }}",
+          "label": "Industrial Sensor Live Stream",
+          "primaryColumns": {
+            "sensor_id": { "id": "sensor_id", "label": "ID" },
+            "value": { "id": "value", "label": "Pressure (PSI)" },
+            "status": { "id": "status", "label": "Criticality" }
+          }
+        }
+      },
+      {
+        "widgetName": "LatencyChart",
+        "type": "CHART_WIDGET",
+        "topRow": 14,
+        "bottomRow": 60,
+        "leftColumn": 41,
+        "rightColumn": 64,
+        "props": {
+          "chartType": "LINE_CHART",
+          "chartData": "{{ RealtimeService.latency_log.data }}",
+          "title": "Industrial Protocol Latency (ms)"
+        }
+      },
+      {
+        "widgetName": "ControlActionContainer",
+        "type": "CONTAINER_WIDGET",
+        "topRow": 62,
+        "bottomRow": 110,
+        "leftColumn": 0,
+        "rightColumn": 64,
+        "props": { "backgroundColor": "#F0F0F0", "label": "System Actions" },
+        "children": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,60 @@
+# Dre Proprietary
+# Copyright (c) 2023 Dre Optimized 2056
+# All rights reserved.
+
+# Requirements for Dre Optimized 2056
+# High-efficiency industrial tool for Elderly Care Technology for Rural Areas with Limited Access to Healthcare
+
+# Python 3.9+
+python==3.9.10
+
+# Frameworks and Libraries
+flask==2.0.2
+flask-restful==0.3.9
+flask-sqlalchemy==2.5.1
+flask-login==0.5.0
+flask-bcrypt==0.7.1
+flask-wtf==0.14.3
+
+# Database
+sqlite3==3.36.0
+psycopg2-binary==2.9.3
+
+# ORM
+sqlalchemy==1.4.32
+
+# Web Scraping
+beautifulsoup4==4.11.1
+requests==2.28.1
+
+# Machine Learning
+scikit-learn==1.0.2
+pandas==1.4.2
+numpy==1.22.3
+scipy==1.9.0
+
+# Natural Language Processing
+nltk==3.6.7
+spaCy==3.4.1
+gensim==4.1.2
+
+# Data Preprocessing
+pandas-datareader==0.10.0
+pytz==2022.2.5
+
+# Logging and Tracing
+loguru==0.7.0
+tenacity==8.1.0
+
+# Testing
+pytest==7.1.2
+pytest-cov==2.12.1
+pytest-flask==0.15.0
+pytest-mock==3.10.0
+
+# Security
+cryptography==38.0.4
+pyjwt==2.4.0
+
+# Other
+python-dotenv==0.20.0

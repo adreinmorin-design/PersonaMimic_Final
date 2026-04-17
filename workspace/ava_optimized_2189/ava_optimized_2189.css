@@ -1,0 +1,78 @@
+/* Dre Proprietary
+ * Copyright (c) 2023 YourCompany Inc.
+ */
+
+/* General Styles */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    overflow: hidden;
+}
+
+/* Header Styles */
+header {
+    background-color: #333;
+    color: white;
+    padding: 1rem 0;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+}
+
+/* Navigation Bar Styles */
+.navbar {
+    display: flex;
+    justify-content: space-around;
+    background-color: #444;
+    padding: 0.5rem 0;
+}
+
+.navbar a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.2rem;
+}
+
+.navbar a:hover {
+    text-decoration: underline;
+}
+
+/* Main Content Styles */
+main {
+    display: flex;
+    justify-content: space-between;
+    padding: 2rem 0;
+}
+
+aside {
+    width: 30%;
+    background-color: #f4f4f4;
+    padding: 1rem;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+}
+
+article {
+    width: 65%;
+    background-color: white;
+    padding: 1rem;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Footer Styles */
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 1rem 0;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}

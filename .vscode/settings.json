@@ -1,0 +1,16 @@
+{
+    "markdown.validate.enabled": false,
+    "files.readonlyInclude": {
+        "{**/.c4z/.extsrcs/*.PROTSYM.cbl,**/.c4z/.extsrcs/*.PROTSYM.listing}": true
+    },
+    "css.lint.unknownAtRules": "ignore",
+    "python.analysis.extraPaths": [
+        "./backend"
+    ],
+    "python.analysis.exclude": [
+        "**/__pycache__",
+        "**/.venv",
+        "**/node_modules"
+    ],
+    "python.defaultInterpreterPath": "./.venv/Scripts/python.exe"
+}

@@ -1,0 +1,10 @@
+{
+  "base_model": "unsloth/llama-3.1-8b-instruct-bnb-4bit",
+  "trained_at": "2026-04-12T14:42:25.860405",
+  "status": "COMPLETED",
+  "archetypes": [
+    "supabase_realtime",
+    "appsmith_lowcode"
+  ],
+  "forged_by": "Dre Neural Swarm"
+}

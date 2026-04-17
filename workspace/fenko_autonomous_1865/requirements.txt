@@ -1,0 +1,189 @@
+# Dre Proprietary
+# Copyright (c) 2024 Dre Proprietary
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+# requirements.txt for fenko_autonomous_1865
+# High-performance tool for Personalized Micro-Learning for Remote Healthcare Workers
+
+# Core Dependencies
+numpy==1.23.4
+pandas==1.5.2
+scikit-learn==1.2.0
+scipy==1.9.3
+matplotlib==3.6.2
+seaborn==0.12.1
+plotly==5.11.0
+flask==2.2.2
+flask-restful==0.3.9
+flask-cors==3.0.10
+flask-sqlalchemy==2.5.1
+sqlalchemy==1.4.43
+psycopg2==2.9.5
+python-dotenv==0.20.0
+
+# Domain-Driven Design (DDD) Dependencies
+domain-model==0.1.1
+value-object==0.1.0
+entity==0.1.0
+repository==0.1.0
+use-case==0.1.0
+
+# Error Handling and Logging Dependencies
+loguru==0.6.0
+structlog==22.2.0
+tenacity==8.2.1
+
+# Testing Dependencies
+pytest==7.1.2
+pytest-cov==4.0.0
+pytest-mock==3.10.2
+responses==0.22.0
+
+# Documentation Dependencies
+sphinx==5.1.1
+sphinx-autodoc-typehints==1.19.0
+sphinx-rtd-theme==1.0.0
+
+# Security Dependencies
+cryptography==38.0.3
+pyjwt==2.4.0
+python-jose==3.3.0
+
+# Development Dependencies
+pre-commit==2.20.0
+black==22.12.0
+isort==5.12.0
+mypy==0.971
+flake8==6.0.0
+pylint==2.14.5
+
+# fenko_autonomous_1865 Specific Dependencies
+fenko-autonomous-1865-utils==1.0.0
+fenko-autonomous-1865-models==1.0.0
+fenko-autonomous-1865-repositories==1.0.0
+fenko-autonomous-1865-use-cases==1.0.0
+fenko-autonomous-1865-api==1.0.0
+
+# fenko_autonomous_1865 API Dependencies
+flask-api==2.1.1
+flask-marshmallow==0.14.0
+marshmallow-sqlalchemy==0.26.1
+
+# fenko_autonomous_1865 Database Dependencies
+postgresql==2.9.5
+psycopg2-binary==2.9.5
+
+# fenko_autonomous_1865 Frontend Dependencies
+react==18.2.0
+react-dom==18.2.0
+react-scripts==5.0.1
+webpack==5.74.0
+babel-loader==8.2.3
+css-loader==6.7.1
+style-loader==3.3.0
+
+# fenko_autonomous_1865 Miscellaneous Dependencies
+python-decouple==3.6
+python-dotenv==0.20.0
+gunicorn==20.1.0
+whitenoise==6.2.0
+django-stubs==1.12.0
+mypy-extensions==0.4.3
+types-requests==2.28.11
+types-python-dateutil==2.8.14
+types-redis==4.3.4
+types-urllib3==1.26.13
+types-certifi==2022.12.15
+types-chardet==5.0.0
+types-idna==3.4.0
+types-requests-toolbelt==0.9.1
+types-tenacity==8.2.1
+types-structlog==22.2.0
+types-loguru==0.6.0
+types-pydantic==1.10.2
+types-pyjwt==2.4.0
+types-python-jose==3.3.0
+types-cryptography==38.0.3
+types-sqlalchemy==1.4.43
+types-psycopg2==2.9.5
+types-flask==2.2.2
+types-flask-restful==0.3.9
+types-flask-cors==3.0.10
+types-flask-sqlalchemy==2.5.1
+types-flask-api==2.1.1
+types-flask-marshmallow==0.14.0
+types-marshmallow-sqlalchemy==0.26.1
+types-react==18.2.0
+types-react-dom==18.2.0
+types-react-scripts==5.0.1
+types-webpack==5.74.0
+types-babel-loader==8.2.3
+types-css-loader==6.7.1
+types-style-loader==3.3.0
+types-python-decouple==3.6
+types-python-dotenv==0.20.0
+types-gunicorn==20.1.0
+types-whitenoise==6.2.0
+types-django-stubs==1.12.0
+types-mypy-extensions==0.4.3
+types-types-requests==2.28.11
+types-types-python-dateutil==2.8.14
+types-types-redis==4.3.4
+types-types-urllib3==1.26.13
+types-types-certifi==2022.12.15
+types-types-chardet==5.0.0
+types-types-idna==3.4.0
+types-types-requests-toolbelt==0.9.1
+types-types-tenacity==8.2.1
+types-types-structlog==22.2.0
+types-types-loguru==0.6.0
+types-types-pydantic==1.10.2
+types-types-pyjwt==2.4.0
+types-types-python-jose==3.3.0
+types-types-cryptography==38.0.3
+types-types-sqlalchemy==1.4.43
+types-types-psycopg2==2.9.5
+types-types-flask==2.2.2
+types-types-flask-restful==0.3.9
+types-types-flask-cors==3.0.10
+types-types-flask-sqlalchemy==2.5.1
+types-types-flask-api==2.1.1
+types-types-flask-marshmallow==0.14.0
+types-types-marshmallow-sqlalchemy==0.26.1
+types-types-react==18.2.0
+types-types-react-dom==18.2.0
+types-types-react-scripts==5.0.1
+types-types-webpack==5.74.0
+types-types-babel-loader==8.2.3
+types-types-css-loader==6.7.1
+types-types-style-loader==3.3.0
+types-types-python-decouple==3.6
+types-types-python-dotenv==0.20.0
+types-types-gunicorn==20.1.0
+types-types-whitenoise==6.2.0
+types-types-django-stubs==1.12.0
+types-types-mypy-extensions==0.4.3

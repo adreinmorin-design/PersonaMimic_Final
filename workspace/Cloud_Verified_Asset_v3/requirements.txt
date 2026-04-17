@@ -1,0 +1,37 @@
+# Studio-Grade requirements.txt for Cloud_Verified_Asset_v3
+
+#dre proprietary
+DreProprietaryLicense-2023
+
+# Testing Frameworks
+pytest==7.1.2
+pytest-cov==4.0.0
+
+# Logging and Monitoring
+structlog==20.4.0
+graypy==2.0.0
+
+# Cloud SDKs
+boto3==1.20.0
+google-cloud-monitoring==2.1.0
+
+# Dependency Injection
+injector==0.20.0
+
+# Data Handling and Serialization
+jsonschema==4.5.1
+marshmallow==3.16.0
+
+# Utilities
+click==8.0.3
+pyyaml==6.0
+
+# Metrics Collection
+prometheus_client==0.13.1
+
+# Security Libraries
+cryptography==39.0.2
+
+# Other Dependencies
+requests==2.27.1
+tenacity==8.0.1
