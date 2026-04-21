@@ -42,3 +42,6 @@ workspace/
 .pytest_cache/
 /tools/
 /scratch/
+logs/*.json
+*.db*
+*.log
