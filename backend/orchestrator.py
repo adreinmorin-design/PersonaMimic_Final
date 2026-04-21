@@ -4,7 +4,8 @@ import json
 import os
 import sys
 import traceback
-import urllib.request
+
+import aiohttp
 
 
 # Production standard: Dedicated JSON logger for the orchestrator
@@ -92,22 +93,38 @@ class AIOrchestrator:
         # Infrastructure Boot (NAT, Redis & Postgres via Docker)
         logger.info("Booting supporting infrastructure (NATS/Redis/Postgres)...")
         try:
-            # Check if docker is running first
-            docker_check = await asyncio.create_subprocess_exec("docker", "info", stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
-            await docker_check.wait()
-            if docker_check.returncode == 0:
-                infra_proc = await asyncio.create_subprocess_exec(
-                    "docker-compose", "up", "-d", "nats", "redis", "postgres",
-                    cwd=os.path.dirname(BACKEND_DIR),
+            # Check if docker is running first (with 5s timeout)
+            try:
+                docker_check = await asyncio.create_subprocess_exec(
+                    "docker",
+                    "info",
                     stdout=asyncio.subprocess.DEVNULL,
                     stderr=asyncio.subprocess.DEVNULL,
                 )
-                await infra_proc.wait()
-                logger.info("Infrastructure services (NATS/Redis/Postgres) signaled to start.")
-            else:
-                logger.warning("Docker NOT RUNNING. Using local fallbacks.")
+                await asyncio.wait_for(docker_check.wait(), timeout=5.0)
+
+                if docker_check.returncode == 0:
+                    infra_proc = await asyncio.create_subprocess_exec(
+                        "docker-compose",
+                        "up",
+                        "-d",
+                        "nats",
+                        "redis",
+                        "postgres",
+                        cwd=os.path.dirname(BACKEND_DIR),
+                        stdout=asyncio.subprocess.DEVNULL,
+                        stderr=asyncio.subprocess.DEVNULL,
+                    )
+                    await asyncio.wait_for(infra_proc.wait(), timeout=15.0)
+                    logger.info("Infrastructure services (NATS/Redis/Postgres) signaled to start.")
+                else:
+                    logger.warning("Docker NOT RUNNING. Using local fallbacks.")
+            except TimeoutError:
+                logger.warning("Docker check timed out. Proceeding in degraded mode.")
         except Exception as e:
-            logger.warning(f"Could not start Docker infrastructure: {e}. Falling back to degraded mode.")
+            logger.warning(
+                f"Could not start Docker infrastructure: {e}. Falling back to degraded mode."
+            )
 
         logger.info("Pre-flight cleanup and infrastructure check complete.")
 
@@ -142,21 +159,19 @@ class AIOrchestrator:
         except Exception as e:
             logger.debug(f"Failed to clear port {port}: {e}")
 
-    async def check_ollama_health(self) -> bool:
-        """Ping Ollama endpoint."""
+    async def execute_agent_action(self, url: str) -> bool:
+        """Asynchronous action executor using aiohttp (Industrial Standard)."""
         try:
-            return await asyncio.to_thread(self._ping_url, OLLAMA_URL)
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, timeout=2) as response:
+                    return response.status == 200
         except Exception as exc:
-            logger.debug(f"Ollama health check failed: {exc}")
+            logger.debug(f"Action failed for {url}: {exc}")
             return False
 
-    def _ping_url(self, url: str) -> bool:
-        try:
-            with urllib.request.urlopen(url, timeout=2) as response:
-                return response.status == 200
-        except Exception as exc:
-            logger.debug(f"Ping failed for {url}: {exc}")
-            return False
+    async def check_ollama_health(self) -> bool:
+        """Ping Ollama endpoint."""
+        return await self.execute_agent_action(OLLAMA_URL)
 
     async def ensure_llm_models(self):
         """Ensure required local models are downloaded with non-blocking feedback."""
@@ -231,15 +246,25 @@ class AIOrchestrator:
         # Use absolute path for uv to ensure execution
         uv_path = r"C:\Users\Albert Morin\.local\bin\uv.exe"
         if not os.path.exists(uv_path):
-             uv_path = "uv"
+            uv_path = "uv"
 
         self.processes["backend"] = await asyncio.create_subprocess_exec(
-            uv_path, "run", "uvicorn", "main:app", 
-            "--host", "0.0.0.0", 
-            "--port", "8055", 
-            "--backlog", "2048", 
-            "--timeout-keep-alive", "30",
-            cwd=BACKEND_DIR, env=env, stdout=sys.stdout, stderr=sys.stderr
+            uv_path,
+            "run",
+            "uvicorn",
+            "main:app",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8055",
+            "--backlog",
+            "2048",
+            "--timeout-keep-alive",
+            "30",
+            cwd=BACKEND_DIR,
+            env=env,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
         )
 
     async def start_frontend(self):
@@ -272,7 +297,7 @@ class AIOrchestrator:
                 await self.start_frontend()
 
             # Health Pings
-            if not await asyncio.to_thread(self._ping_url, BACKEND_URL):
+            if not await self.execute_agent_action(BACKEND_URL):
                 logger.warning("Backend unresponsive to HTTP. Forcing restart...")
                 await self._stop_process("backend")
                 await self.start_backend()
@@ -322,7 +347,9 @@ async def main():
             # Step 2: API & UI
             await orchestrator.start_backend()
             logger.info("Waiting for Neural Synapse stabilization (25s)...")
-            await asyncio.sleep(25)  # Extended stabilization for staggered brain boot and voice model load
+            await asyncio.sleep(
+                25
+            )  # Extended stabilization for staggered brain boot and voice model load
             await orchestrator.start_frontend()
 
             # Step 3: Lifecycle Management

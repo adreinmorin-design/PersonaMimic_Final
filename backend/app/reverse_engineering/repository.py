@@ -1,3 +1,4 @@
+import asyncio
 import json
 
 from sqlalchemy.orm import Session
@@ -17,7 +18,10 @@ class ReverseEngineeringRepository:
         clean = [item.strip() for item in (items or []) if item and item.strip()]
         return json.dumps(clean)
 
-    def seed_builtin_targets(self, db: Session) -> None:
+    async def seed_builtin_targets(self, db: Session) -> None:
+        await asyncio.to_thread(self._seed_builtin_targets_sync, db)
+
+    def _seed_builtin_targets_sync(self, db: Session) -> None:
         existing = {target.target_id: target for target in db.query(AgentTarget).all()}
         for item in BUILTIN_AGENT_TARGETS:
             target_id = str(item["target_id"])
@@ -39,7 +43,10 @@ class ReverseEngineeringRepository:
                 db.add(AgentTarget(target_id=target_id, **payload))
         db.commit()
 
-    def create_custom_target(self, db: Session, req: AgentTargetCreateRequest) -> AgentTarget:
+    async def create_custom_target(self, db: Session, req: AgentTargetCreateRequest) -> AgentTarget:
+        return await asyncio.to_thread(self._create_custom_target_sync, db, req)
+
+    def _create_custom_target_sync(self, db: Session, req: AgentTargetCreateRequest) -> AgentTarget:
         target_id = self._normalize_key(req.target_id)
         if not target_id:
             raise ValueError("target_id is required")
@@ -64,25 +71,34 @@ class ReverseEngineeringRepository:
         db.refresh(target)
         return target
 
-    def list_targets(self, db: Session) -> list[AgentTarget]:
+    async def list_targets(self, db: Session) -> list[AgentTarget]:
+        return await asyncio.to_thread(self._list_targets_sync, db)
+
+    def _list_targets_sync(self, db: Session) -> list[AgentTarget]:
         return (
             db.query(AgentTarget)
             .order_by(AgentTarget.is_builtin.desc(), AgentTarget.name.asc())
             .all()
         )
 
-    def get_target_by_id(self, db: Session, target_id: str) -> AgentTarget | None:
+    async def get_target_by_id(self, db: Session, target_id: str) -> AgentTarget | None:
+        return await asyncio.to_thread(self._get_target_by_id_sync, db, target_id)
+
+    def _get_target_by_id_sync(self, db: Session, target_id: str) -> AgentTarget | None:
         normalized = self._normalize_key(target_id)
         if not normalized:
             return None
         return db.query(AgentTarget).filter(AgentTarget.target_id == normalized).first()
 
-    def resolve_target(self, db: Session, raw_target: str) -> AgentTarget | None:
+    async def resolve_target(self, db: Session, raw_target: str) -> AgentTarget | None:
+        return await asyncio.to_thread(self._resolve_target_sync, db, raw_target)
+
+    def _resolve_target_sync(self, db: Session, raw_target: str) -> AgentTarget | None:
         normalized = self._normalize_key(raw_target)
         if not normalized:
             return None
 
-        for target in self.list_targets(db):
+        for target in self._list_targets_sync(db):
             if normalized == self._normalize_key(target.target_id):
                 return target
             if normalized == self._normalize_key(target.name):
@@ -91,7 +107,10 @@ class ReverseEngineeringRepository:
                 return target
         return None
 
-    def create_job(self, db: Session, req: SynthesisRequest) -> SynthesisJob:
+    async def create_job(self, db: Session, req: SynthesisRequest) -> SynthesisJob:
+        return await asyncio.to_thread(self._create_job_sync, db, req)
+
+    def _create_job_sync(self, db: Session, req: SynthesisRequest) -> SynthesisJob:
         target = req.target.strip()
         cluster_id = req.cluster_id.strip()
         if not target or not cluster_id:
@@ -108,12 +127,15 @@ class ReverseEngineeringRepository:
         db.refresh(job)
         return job
 
-    def get_job(self, db: Session, job_id: int) -> SynthesisJob | None:
+    async def get_job(self, db: Session, job_id: int) -> SynthesisJob | None:
+        return await asyncio.to_thread(self._get_job_sync, job_id, db)
+
+    def _get_job_sync(self, job_id: int, db: Session) -> SynthesisJob | None:
         if job_id <= 0:
             return None
         return db.query(SynthesisJob).filter(SynthesisJob.id == job_id).first()
 
-    def update_job_status(
+    async def update_job_status(
         self,
         db: Session,
         job_id: int,
@@ -121,7 +143,19 @@ class ReverseEngineeringRepository:
         result_code: str | None = None,
         purpose: str | None = None,
     ) -> SynthesisJob | None:
-        job = self.get_job(db, job_id)
+        return await asyncio.to_thread(
+            self._update_job_status_sync, db, job_id, status, result_code, purpose
+        )
+
+    def _update_job_status_sync(
+        self,
+        db: Session,
+        job_id: int,
+        status: str,
+        result_code: str | None = None,
+        purpose: str | None = None,
+    ) -> SynthesisJob | None:
+        job = self._get_job_sync(job_id, db)
         if not job:
             return None
 
@@ -135,13 +169,26 @@ class ReverseEngineeringRepository:
         db.refresh(job)
         return job
 
-    def list_jobs_by_status(self, db: Session, status: str) -> list[SynthesisJob]:
+    async def list_jobs_by_status(self, db: Session, status: str) -> list[SynthesisJob]:
+        return await asyncio.to_thread(self._list_jobs_by_status_sync, db, status)
+
+    def _list_jobs_by_status_sync(self, db: Session, status: str) -> list[SynthesisJob]:
         return db.query(SynthesisJob).filter(SynthesisJob.status == status).all()
 
-    def list_all_jobs(self, db: Session) -> list[SynthesisJob]:
+    async def list_all_jobs(self, db: Session) -> list[SynthesisJob]:
+        return await asyncio.to_thread(self._list_all_jobs_sync, db)
+
+    def _list_all_jobs_sync(self, db: Session) -> list[SynthesisJob]:
         return db.query(SynthesisJob).order_by(SynthesisJob.created_at.desc()).all()
 
-    def create_replicated_tool(
+    async def create_replicated_tool(
+        self,
+        db: Session,
+        **kwargs,
+    ) -> ReplicatedTool:
+        return await asyncio.to_thread(self._create_replicated_tool_sync, db, **kwargs)
+
+    def _create_replicated_tool_sync(
         self,
         db: Session,
         *,
@@ -181,7 +228,18 @@ class ReverseEngineeringRepository:
         db.refresh(tool)
         return tool
 
-    def list_replicated_tools(
+    async def list_replicated_tools(
+        self,
+        db: Session,
+        *,
+        target_id: str | None = None,
+        status: str | None = None,
+    ) -> list[ReplicatedTool]:
+        return await asyncio.to_thread(
+            self._list_replicated_tools_sync, db, target_id=target_id, status=status
+        )
+
+    def _list_replicated_tools_sync(
         self,
         db: Session,
         *,
@@ -195,12 +253,18 @@ class ReverseEngineeringRepository:
             query = query.filter(ReplicatedTool.status == self._normalize_key(status))
         return query.order_by(ReplicatedTool.created_at.desc()).all()
 
-    def get_replicated_tool(self, db: Session, tool_id: int) -> ReplicatedTool | None:
+    async def get_replicated_tool(self, db: Session, tool_id: int) -> ReplicatedTool | None:
+        return await asyncio.to_thread(self._get_replicated_tool_sync, db, tool_id)
+
+    def _get_replicated_tool_sync(self, db: Session, tool_id: int) -> ReplicatedTool | None:
         if tool_id <= 0:
             return None
         return db.query(ReplicatedTool).filter(ReplicatedTool.id == tool_id).first()
 
-    def list_replicated_tools_by_job(self, db: Session, job_id: int) -> list[ReplicatedTool]:
+    async def list_replicated_tools_by_job(self, db: Session, job_id: int) -> list[ReplicatedTool]:
+        return await asyncio.to_thread(self._list_replicated_tools_by_job_sync, db, job_id)
+
+    def _list_replicated_tools_by_job_sync(self, db: Session, job_id: int) -> list[ReplicatedTool]:
         if job_id <= 0:
             return []
         return (

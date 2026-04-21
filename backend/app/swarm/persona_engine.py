@@ -3,6 +3,7 @@ app/swarm/persona_engine.py - Streamlined & Optimized LLM Orchestrator
 Simplified for high-efficiency industrial production with Cloud-Ollama support.
 """
 
+import asyncio
 import hashlib
 import json
 import logging
@@ -10,11 +11,20 @@ import os
 import time
 from typing import Any
 
+# System Standards: Multi-Agent Cloud Routing
+CLOUD_ALLOWLIST = [
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
+    "llama3-70b-8192",
+    "mixtral-8x7b-32768",
+    "gemma2-9b-it",
+]
+
 import ollama
-import requests
 
 from app.config.service import config_service
 from app.core.cache import cache
+from app.core.paths import CUSTOM_TOOL_REGISTRY
 from app.database.database import SessionLocal
 from app.forge.mapper import knowledge_mapper
 
@@ -99,6 +109,7 @@ class PersonaEngine:
         self.key = runtime["key"]
         self.is_cloud = runtime["is_cloud"]
         self.is_vllm = runtime.get("is_vllm", False)
+        self._load_custom_tools()
 
         if self.is_cloud:
             # We use local Ollama-compatible client for standard OSS cloud endpoints
@@ -110,7 +121,7 @@ class PersonaEngine:
             self.client = OpenAI(base_url=f"{self.host.rstrip('/')}/v1", api_key=self.key)
             logger.info(f"PersonaEngine [vLLM ROCm Mode] Active: {self.model} @ {self.host}")
         else:
-            self.client = ollama.Client(
+            self.client = ollama.AsyncClient(
                 host=self.host, headers={"X-API-KEY": self.key} if self.key else None
             )
             logger.info(
@@ -144,6 +155,23 @@ class PersonaEngine:
                 logger.debug("Bootstrap setting read failed for '%s': %s", key, exc)
                 return None
 
+    def _load_custom_tools(self):
+        """Loads industrial tools reverse-engineered by the swarm."""
+        try:
+            if os.path.exists(CUSTOM_TOOL_REGISTRY):
+                with open(CUSTOM_TOOL_REGISTRY, encoding="utf-8") as f:
+                    registry = json.load(f)
+                    for entry in registry:
+                        tool_def = {
+                            "name": entry["name"],
+                            "description": entry.get("purpose", "Autonomous forensic tool."),
+                            "parameters": entry.get("schema", {"type": "object", "properties": {}}),
+                        }
+                        self.custom_tools.append(tool_def)
+                logger.info(f"Neural Interface: Loaded {len(self.custom_tools)} custom tools.")
+        except Exception as e:
+            logger.warning(f"Failed to load custom tools: {e}")
+
     def _resolve_runtime(self, model_override: str | None) -> dict[str, Any]:
         """Priority: Override > DB Setting > Env > Fallback."""
         db_use_cloud = self._read_setting("use_cloud")
@@ -159,9 +187,11 @@ class PersonaEngine:
             or MODEL_FALLBACK
         )
 
-        # Normalize local model
-        if not is_cloud_forced and any(
-            x in str(configured_model).lower() for x in ["llama", "mixtral", "gpt"]
+        # Normalize local model - Allow 32B Coder and other high-performance local models
+        if (
+            not is_cloud_forced
+            and any(x in str(configured_model).lower() for x in ["mixtral", "gpt"])
+            and "coder" not in str(configured_model).lower()
         ):
             configured_model = "qwen2.5:7b"
 
@@ -175,15 +205,22 @@ class PersonaEngine:
             self._read_setting("OLLAMA_CLOUD_URL") or os.getenv("OLLAMA_CLOUD_URL") or ""
         ).strip()
         if is_cloud_forced and cloud_url:
-            return {
-                "model": configured_model,
-                "host": cloud_url,
-                "key": (
-                    self._read_setting("OLLAMA_CLOUD_KEY") or os.getenv("GROQ_API_KEY") or ""
-                ).strip(),
-                "is_cloud": True,
-                "is_vllm": False,
-            }
+            # ONLY try cloud if the model is in our allowlist or explicitly contains cloud-related names
+            is_cloud_model = any(m in str(configured_model).lower() for m in CLOUD_ALLOWLIST)
+            if is_cloud_model:
+                return {
+                    "model": configured_model,
+                    "host": cloud_url,
+                    "key": (
+                        self._read_setting("OLLAMA_CLOUD_KEY") or os.getenv("GROQ_API_KEY") or ""
+                    ).strip(),
+                    "is_cloud": True,
+                    "is_vllm": False,
+                }
+            else:
+                logger.info(
+                    f"Engine: Skipping cloud for local-optimized model '{configured_model}'"
+                )
 
         # 3. Fallback to Local
         return {
@@ -199,6 +236,8 @@ class PersonaEngine:
     @staticmethod
     def _probe_vllm(host: str, model: str) -> dict | None:
         try:
+            import requests
+
             res = requests.get(f"{host.rstrip('/')}/v1/models", timeout=1)
             if res.status_code == 200:
                 logger.info(f"vLLM Detected (ROCm Ready): {host}")
@@ -234,7 +273,7 @@ class PersonaEngine:
             ordered.append(name)
         return ordered
 
-    def list_available_models(self) -> list[str]:
+    async def list_available_models(self) -> list[str]:
         discovered: list[str] = []
 
         if self.is_cloud:
@@ -245,10 +284,15 @@ class PersonaEngine:
                 logger.warning("Cloud model discovery failed: %s", exc)
         else:
             try:
-                response = requests.get(f"{self.host.rstrip('/')}/api/tags", timeout=5)
-                response.raise_for_status()
-                payload = response.json()
-                discovered.extend(model.get("name", "") for model in payload.get("models", []))
+                import aiohttp
+
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"{self.host.rstrip('/')}/api/tags", timeout=5) as res:
+                        res.raise_for_status()
+                        payload = await res.json()
+                        discovered.extend(
+                            model.get("name", "") for model in payload.get("models", [])
+                        )
             except Exception as exc:
                 logger.warning("Local model discovery failed: %s", exc)
 
@@ -263,9 +307,10 @@ class PersonaEngine:
         return models or ["No models detected"]
 
     def _cloud_candidate_models(self) -> list[str]:
+        # Prioritize 8b-instant for fallbacks as it has significantly higher rate limits than 70b or Mixtral
         fallback_csv = os.getenv(
             "CLOUD_FALLBACK_MODELS",
-            "llama-3.1-8b-instant,llama-3.3-70b-versatile,mixtral-8x7b-32768",
+            "llama-3.1-8b-instant,llama-3.3-70b-versatile",
         )
         fallback_models = [item.strip() for item in fallback_csv.split(",") if item.strip()]
         return self._dedupe_models([self.model, *fallback_models])
@@ -276,33 +321,36 @@ class PersonaEngine:
             time.sleep(seconds)
 
     @staticmethod
-    def _fetch_local_models(local_host: str) -> list[str]:
+    async def _fetch_local_models(local_host: str) -> list[str]:
         try:
-            response = requests.get(f"{local_host.rstrip('/')}/api/tags", timeout=5)
-            response.raise_for_status()
-            payload = response.json()
-            return [
-                model.get("name", "").strip()
-                for model in payload.get("models", [])
-                if model.get("name")
-            ]
+            import aiohttp
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{local_host.rstrip('/')}/api/tags", timeout=5) as res:
+                    res.raise_for_status()
+                    payload = await res.json()
+                    return [
+                        model.get("name", "").strip()
+                        for model in payload.get("models", [])
+                        if model.get("name")
+                    ]
         except Exception:
             return []
 
-    def _try_local_fallback(
+    async def _try_local_fallback(
         self, messages: list[dict[str, Any]], last_error: Exception
     ) -> dict[str, Any]:
         local_host = self._normalize_local_host(os.getenv("OLLAMA_HOST") or LOCAL_OLLAMA_HOST)
-        local_models = self._fetch_local_models(local_host)
+        local_models = await self._fetch_local_models(local_host)
         candidate_models = self._dedupe_models([self.model, MODEL_FALLBACK, *local_models])
 
         if not candidate_models:
             raise RuntimeError(f"Cloud inference failed and no local models found: {last_error}")
 
-        local_client = ollama.Client(host=local_host)
+        local_client = ollama.AsyncClient(host=local_host)
         for model_name in candidate_models:
             try:
-                response = local_client.chat(
+                response = await local_client.chat(
                     model=model_name,
                     messages=messages,
                     options={"temperature": 0.2, "top_p": 0.9, "num_predict": 2048},
@@ -324,7 +372,7 @@ class PersonaEngine:
             f"Cloud inference failed and local fallback was unavailable: {last_error}"
         )
 
-    def generate_response(
+    async def generate_response(
         self,
         prompt: str,
         chat_context: list[dict[str, Any]] = None,
@@ -343,15 +391,15 @@ class PersonaEngine:
         last_error = None
         for attempt in range(4):
             try:
-                res = self._execute_inference(messages)
+                res = await self._execute_inference(messages)
                 cache.set(cache_key, res, expire=14400)
                 return res
             except Exception as e:
                 last_error = e
-                self._handle_inference_fault(attempt, e)
+                await self._handle_inference_fault(attempt, e)
 
         if self.is_cloud:
-            res = self._try_local_fallback(messages, last_error)
+            res = await self._try_local_fallback(messages, last_error)
             cache.set(cache_key, res, expire=3600)
             return res
 
@@ -363,56 +411,66 @@ class PersonaEngine:
         )
         return f"llm_cache:{hashlib.md5(seed.encode()).hexdigest()}"
 
-    def _execute_inference(self, messages: list[dict]) -> dict:
+    async def _execute_inference(self, messages: list[dict]) -> dict:
         if self.is_cloud:
-            return self._execute_cloud_oss_inference(messages)
+            # Add a small random jitter (0.5s - 2.5s) to avoid simultaneous hits from multiple brains
+            import random
 
-        response = self.client.chat(
+            await asyncio.sleep(random.uniform(0.5, 2.5))
+            return await self._execute_cloud_oss_inference(messages)
+
+        response = await self.client.chat(
             model=self.model,
             messages=messages,
             options={"temperature": 0.2, "top_p": 0.9, "num_predict": 2048},
         )
         return ResponseParser.normalize_message(response.message)
 
-    def _execute_cloud_oss_inference(self, messages: list[dict]) -> dict:
+    async def _execute_cloud_oss_inference(self, messages: list[dict]) -> dict:
         last_err = None
-        for candidate in self._cloud_candidate_models():
-            try:
-                response = requests.post(
-                    f"{self.host.rstrip('/')}/chat/completions",
-                    headers={"Authorization": f"Bearer {self.key}"},
-                    json={
-                        "model": candidate,
-                        "messages": messages,
-                        "temperature": 0.2,
-                        "max_tokens": 2048,
-                    },
-                    timeout=CLOUD_TIMEOUT_SECONDS,
-                )
-                response.raise_for_status()
-                data = response.json()
-                return {
-                    "role": "assistant",
-                    "content": data["choices"][0]["message"]["content"],
-                    "tool_calls": [],
-                }
-            except Exception as exc:
-                last_err = exc
-                logger.warning("Cloud OSS attempt failed (%s): %s", candidate, exc)
+        import aiohttp
+
+        async with aiohttp.ClientSession() as session:
+            for candidate in self._cloud_candidate_models():
+                try:
+                    async with session.post(
+                        f"{self.host.rstrip('/')}/chat/completions",
+                        headers={"Authorization": f"Bearer {self.key}"},
+                        json={
+                            "model": candidate,
+                            "messages": messages,
+                            "temperature": 0.2,
+                            "max_tokens": 2048,
+                        },
+                        timeout=CLOUD_TIMEOUT_SECONDS,
+                    ) as res:
+                        res.raise_for_status()
+                        data = await res.json()
+                        return {
+                            "role": "assistant",
+                            "content": data["choices"][0]["message"]["content"],
+                            "tool_calls": [],
+                        }
+                except Exception as exc:
+                    last_err = exc
+                    logger.warning("Cloud OSS attempt failed (%s): %s", candidate, exc)
         raise RuntimeError(last_err or "Cloud OSS candidates exhausted.")
 
-    def _handle_inference_fault(self, attempt: int, error: Exception):
+    async def _handle_inference_fault(self, attempt: int, error: Exception):
         is_429 = "429" in str(error) or "rate_limit" in str(error).lower()
-        sleep_time = min(12, (5 if is_429 else 2) ** attempt)
-        logger.warning(f"Inference Fault (Attempt {attempt + 1}): {error}")
-        self._safe_sleep(sleep_time)
+        # For 429, we start with a much longer sleep (15s) and jitter it heavily to avoid swarm collisions
+        import random
+
+        base_sleep = 15 if is_429 else 2
+        sleep_time = min(120, (base_sleep ** (attempt + 1)) + random.uniform(5, 15))
+        logger.warning(
+            f"Inference Fault (Attempt {attempt + 1}): {error}. Retrying in {sleep_time:.1f}s..."
+        )
+        await asyncio.sleep(sleep_time)
 
     def _build_prompt(
         self, base_prompt: str, tools: list[dict[str, Any]], persona_type: str
     ) -> str:
-        if base_prompt:
-            return base_prompt
-
         # Shared high-fidelity directive (Imported from domain sibling)
         try:
             from app.swarm.tools import FACTORY_MIN_SCORE
@@ -426,22 +484,25 @@ class PersonaEngine:
         training_directives = ""
         if persona_type == "coding":
             training_directives = """
-## CODING STANDARDS (CRITICAL):
-1. Domain-Driven Design: Decouple routing/logic.
-2. Guard Clauses: Replace nested if/else with early returns.
-3. Clean Code: Provide type hints. Use absolute imports.
-4. Code Completeness: NEVER use placeholders, 'pass', or 'TODO'. Fully implement all logic.
-5. Error Handling: Always implement try/except blocks and logging.
-6. Supabase Realtime (Industrial): Use Pure Phoenix 2.0 protocol (not standard SDKs) for high efficiency. Enforce 25s heartbeats. Validate all private topics against RLS.
-7. Appsmith DSL (Industrial): Maintain strict absolute grid coordinates (topRow, bottomRow, leftColumn, rightColumn). Use double curly braces {{ }} for dynamic bindings. Enforce JSON hierarchy for container widgets.
+## CODING STANDARDS (INDUSTRIAL SCALE):
+1. Advanced Architecture: Enforce multi-module DDD or Micro-services patterns. Avoid monolithic scripts.
+2. Asynchronous Core: EVERY IO-bound operation MUST be asynchronous. Use 'asyncio' for all database and network calls.
+3. Logic Density: Implement high-complexity algorithms (e.g. predictive analytics, multi-threaded ingestion). NEVER simplify code for brevity.
+4. Industrial Resilience: Implement robust retry logic, circuit breakers, and comprehensive telemetry/logging in every module.
+5. Code Completeness: ZERO tolerance for placeholders, 'pass', or 'TODO'. Full production-ready implementation is mandatory.
+6. Polyglot Integration: Where appropriate, suggest Go or Rust bridges for performance-critical bottlenecks.
+7. Branding: EVERY file MUST include the '© 2026 Dre' proprietary industrial copyright header.
+8. Supabase & Appsmith: Enforce low-latency Phoenix 2.0 protocols and pixel-perfect absolute grid DSL layouts.
 """
         elif persona_type == "reasoning":
             training_directives = """
-## REASONING & STRATEGY STANDARDS (CRITICAL):
-1. Think sequentially: Break down complex problems into atomic logical steps.
-2. Market Alignment: Ensure all architectural decisions align with profitable product constraints.
-3. Validate Assumptions: Always test hypotheses against data before committing to technical specs.
-4. Neutral Observation: Analyze failures and bugs with perfect detachment to self-heal code effectively.
+## REASONING & STRATEGY STANDARDS (INDUSTRIAL GRADE):
+1. Multi-Dimensional Analysis: Consider technical, economic, and operational constraints in every decision.
+2. High-Complexity Product Design: Prioritize products that solve deep-seated technical 'pain points' requiring sophisticated engineering, not simple CRUD apps.
+3. Demand-First Discovery: Focus research on 'Latent Demand'—underserved, high-value needs that people want but cannot find.
+4. Predictive Synthesis: Extrapolate complex trends to design non-obvious, viral digital product categories for 2026 and beyond.
+5. Scalability First: Design for industrial scale (millions of users/transactions) from the start.
+6. Forensic Neutrality: Analyze data with absolute detachment to ensure market-alignment is driven by facts, not optimism.
 """
         elif persona_type == "director":
             training_directives = """
@@ -452,9 +513,15 @@ class PersonaEngine:
 4. Self-Healing Lead: Analyze system-wide failures and issue corrective directives for the entire swarm.
 """
 
-        return f"""## IDENTITY: Studio-Grade {persona_type.upper()} Swarm Node
+        identity = f"""## IDENTITY: Studio-Grade {persona_type.upper()} Swarm Node
 ## MISSION: Build premium, Dre-Branded digital assets.
 ## QUALITY GATE: Minimum Score {factory_min_score}/100.{training_directives}
+"""
+
+        if base_prompt:
+            return f"{identity}\n\n## TASK:\n{base_prompt}"
+
+        return f"""{identity}
 ## SCHEMA: Respond ONLY with JSON: {{"analysis": "reasoning", "action": "tool", "params": {{}}}}
 ## TOOLS:
 {tools_str}

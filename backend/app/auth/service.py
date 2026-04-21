@@ -5,11 +5,15 @@ from typing import Any
 
 import aiofiles
 import torch
+from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from app.auth.models import User
 from app.auth.repository import auth_repo
 from app.auth.schemas import ConsentRequest
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+logger = logging.getLogger("auth_service")
 
 try:
     import torchaudio
@@ -93,15 +97,53 @@ class AuthService:
             logger.error(f"Preprocessing audio failed: {e}")
             return False
 
+    def get_password_hash(self, password: str) -> str:
+        return pwd_context.hash(password)
+
+    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+        return pwd_context.verify(plain_password, hashed_password)
+
     def register_user(self, db: Session, request: ConsentRequest) -> User:
         """Register a new user and assign roles."""
         is_first = auth_repo.get_user_count(db) == 0
-        role_name = "owner" if is_first else "user"
+        # Dre is always owner, regardless of order
+        role_name = "owner" if is_first or request.username.lower() == "dre" else "user"
 
         user = auth_repo.get_user_by_username(db, request.username)
         if not user:
             role = auth_repo.get_role_by_name(db, role_name)
-            user = auth_repo.create_user(db, request.username, role.id)
+            if not role:
+                logger.info(f"Role '{role_name}' not found. Creating autonomously.")
+                role = auth_repo.create_role(db, role_name)
+                if role_name == "owner":
+                    auth_repo.create_role(db, "user")
+
+            hashed = self.get_password_hash(request.password) if request.password else None
+            user = auth_repo.create_user(db, request.username, role.id, hashed)
+        else:
+            # Enforce Dre as owner even if already exists as user
+            if request.username.lower() == "dre":
+                owner_role = auth_repo.get_role_by_name(db, "owner")
+                if user.role_id != owner_role.id:
+                    user.role_id = owner_role.id
+                    db.commit()
+                    db.refresh(user)
+
+        return user
+
+    def login(self, db: Session, request: Any) -> User:
+        user = auth_repo.get_user_by_username(db, request.username)
+        if not user:
+            raise ValueError("User not found.")
+
+        if user.hashed_password:
+            if not self.verify_password(request.password, user.hashed_password):
+                raise ValueError("Invalid password.")
+        elif request.username.lower() == "dre":
+            # First time Dre logins, they set their password
+            hashed = self.get_password_hash(request.password)
+            auth_repo.update_user_password(db, user, hashed)
+            logger.info("Master Operator 'Dre' has set their secure password.")
 
         return user
 

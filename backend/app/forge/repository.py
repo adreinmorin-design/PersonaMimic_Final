@@ -1,5 +1,5 @@
-from typing import Any
 import logging
+from typing import Any
 
 logger = logging.getLogger("forge.repository")
 
@@ -13,7 +13,9 @@ class ForgeRepository:
     def __init__(self):
         self._failure_history: list[dict[str, Any]] = []
 
-    def log_failure(self, brain_name: str, task_id: int, error_message: str) -> dict[str, Any]:
+    async def log_failure(
+        self, brain_name: str, task_id: int, error_message: str
+    ) -> dict[str, Any]:
         failure_event = {
             "brain": brain_name,
             "task_id": task_id,
@@ -22,10 +24,10 @@ class ForgeRepository:
         self._failure_history.append(failure_event)
         return failure_event
 
-    def get_failure_history(self) -> list[dict[str, Any]]:
+    async def get_failure_history(self) -> list[dict[str, Any]]:
         return self._failure_history
 
-    def get_failure_count(self) -> int:
+    async def get_failure_count(self) -> int:
         return len(self._failure_history)
 
 

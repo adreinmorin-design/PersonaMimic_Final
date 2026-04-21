@@ -13,6 +13,7 @@ except IndexError:
 STATIC_DIR = BACKEND_DIR / "static"
 WORKSPACE_DIR = PROJECT_ROOT / "workspace"
 CUSTOM_TOOLS_DIR = BACKEND_DIR / "custom_tools"
+CUSTOM_TOOL_REGISTRY = CUSTOM_TOOLS_DIR / "tool_registry.json"
 DATABASE_PATH = PROJECT_ROOT / "persona_mimic.db"
 PREDICTIVE_MODEL_PATH = BACKEND_DIR / "predictive_model.pkl"
 

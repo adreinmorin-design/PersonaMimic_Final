@@ -4,6 +4,7 @@
 # Translates decompiled neural patterns into functional code.
 #
 
+import asyncio
 import logging
 import re
 
@@ -70,7 +71,9 @@ class SynthesisAgent:
         }
         return parsed
 
-    def synthesize_from_cluster(self, cluster_id: str, context: str = "") -> dict[str, object]:
+    async def synthesize_from_cluster(
+        self, cluster_id: str, context: str = ""
+    ) -> dict[str, object]:
         """
         Reads a neural cluster via the diagnostic suite and generates code + purpose blurb.
         """
@@ -80,7 +83,7 @@ class SynthesisAgent:
         pattern = diagnostic_suite.neural_decompile(cluster_id)
         if "Unknown" in pattern:
             return {
-                "code": f"/* Error: Could not synthesize from unknown cluster {cluster_id} */",
+                "code": f"# Error: Could not synthesize from unknown cluster {cluster_id}",
                 "purpose": "Unknown",
             }
 
@@ -109,11 +112,13 @@ class SynthesisAgent:
         INTEGRATION_STEPS[]: [one numbered step per line]
         LIMITATIONS[]: [one bullet per line, be brutally honest about edge cases]
         CODE: [fully functional, production-ready implementation.
-              STRICT RULE: No placeholders, no TODOs, no 'pass' statements, and no NotImplementedErrors.
+              STRICT RULE 1: EVERY file MUST begin with the '© 2026 Dre's Autonomous Neural Interface | Professional Grade Asset' header.
+              STRICT RULE 2: EVERY function must be wrapped in a try/except block with professional logging (import logging).
+              STRICT RULE 3: No placeholders, no TODOs, no 'pass' statements.
               The code must be valid, bug-free, and complete.]
         """
 
-        response = self.engine.generate_response(prompt, persona_type="coding")
+        response = await self.engine.generate_response(prompt, persona_type="coding")
         content = response.get("content", "")
         structured = self._parse_structured_payload(content)
 
@@ -124,11 +129,13 @@ class SynthesisAgent:
 
         # 3. Hybrid Quality Gate Assessment (#3 - Best Practice)
         archetype_match = diagnostic_suite.trace_archetype_influence(pattern, None)
-        semantic_score = self._evaluate_forensic_quality(pattern, generated_code)
+        semantic_score = await self._evaluate_forensic_quality(pattern, generated_code)
         final_score = (archetype_match * 0.4) + (semantic_score * 0.6)
 
         with get_db() as db:
-            threshold_str = config_service.get_setting(db, "min_forensic_score")
+            threshold_str = await asyncio.to_thread(
+                config_service.get_setting, db, "min_forensic_score"
+            )
             threshold = float(threshold_str) if threshold_str else 0.75
 
         if final_score < threshold:
@@ -136,7 +143,7 @@ class SynthesisAgent:
                 f"[QUALITY-GATE] REJECTED. Score: {final_score:.2f} < Threshold: {threshold}"
             )
             return {
-                "code": f"/* Quality Gate Rejection: Hybrid score {final_score:.2f} failed to meet studio threshold. */",
+                "code": f"# Quality Gate Rejection: Hybrid score {final_score:.2f} failed to meet studio threshold.",
                 "purpose": purpose,
                 "purpose_summary": purpose,
                 "tool_name": structured["tool_name"] or "Rejected Tool Artifact",
@@ -166,7 +173,7 @@ class SynthesisAgent:
             "raw_content": content,
         }
 
-    def _evaluate_forensic_quality(self, pattern: str, code: str) -> float:
+    async def _evaluate_forensic_quality(self, pattern: str, code: str) -> float:
         """
         Self-evaluation audit to determine if synthesized code matches neural signals.
         """
@@ -187,7 +194,7 @@ class SynthesisAgent:
         Consider: Functional accuracy, structural mapping, and professional standards.
         Return ONLY a single numeric value.
         """
-        eval_resp = self.engine.generate_response(eval_prompt, persona_type="reasoning")
+        eval_resp = await self.engine.generate_response(eval_prompt, persona_type="reasoning")
         content = eval_resp.get("content", "0.0").strip()
 
         # Extract float

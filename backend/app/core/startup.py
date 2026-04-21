@@ -7,7 +7,7 @@ from app.database.service import db_service
 from app.swarm.service import swarm_manager
 
 logger = logging.getLogger("main")
-DEFAULT_STARTUP_NICHE = "High-Value Digital Products"
+DEFAULT_STARTUP_NICHE = "Trending High-Yield Digital Assets"
 REQUIRED_MODELS = ["qwen2.5-coder:32b", "deepseek-r1:7b"]
 
 
@@ -25,7 +25,8 @@ async def initialize_llm():
 
 async def initialize_swarm():
     await initialize_llm()
-    db_service.init_db()
+    await db_service.init_db()
+    await swarm_manager.initialize()
 
     # Autonomous Onboarding (Full Autonomy Phase 1)
     from app.auth.service import auth_service

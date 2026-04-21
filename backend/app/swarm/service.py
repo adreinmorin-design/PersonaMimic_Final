@@ -116,12 +116,12 @@ class BrainInstance:
         if log_event and detail:
             self._append_log("system", f"[{phase.upper()}] {detail}")
 
-    def _update_task_status(self, task_id: int | None, status: str):
+    async def _update_task_status(self, task_id: int | None, status: str):
         if task_id is None:
             return
         try:
             with get_db() as db:
-                swarm_repo.update_task_status(db, task_id, status)
+                await swarm_repo.update_task_status(db, task_id, status)
         except Exception as exc:
             logger.warning("Failed to mark task %s as %s: %s", task_id, status, exc)
 
@@ -142,7 +142,9 @@ class BrainInstance:
         slug = re.sub(r"[^a-z0-9]+", "_", (value or "").strip().lower()).strip("_")
         return slug or "studio_app"
 
-    async def _run_reverse_engineering_cycle(self, target_id: str, task_id: int) -> tuple[bool, str]:
+    async def _run_reverse_engineering_cycle(
+        self, target_id: str, task_id: int
+    ) -> tuple[bool, str]:
         from app.reverse_engineering.schemas import SynthesisRequest
         from app.reverse_engineering.service import reverse_engineering_service
 
@@ -187,8 +189,6 @@ class BrainInstance:
             )
             return await self._run_reverse_engineering_cycle(reverse_engineering_target, task_id)
 
-        import asyncio
-
         from app.swarm.flow_manager import swarm_workflow
         from app.swarm.nats_service import nats_service
 
@@ -223,7 +223,7 @@ class BrainInstance:
             )
 
             # Running the compiled subgraph
-            final_state = swarm_workflow.invoke(initial_state)
+            final_state = await swarm_workflow.ainvoke(initial_state)
 
             self._set_progress(
                 "auditing", "Adversary performing quality audit...", task_id=task_id, log_event=True
@@ -237,6 +237,10 @@ class BrainInstance:
                     task_id=task_id,
                     log_event=True,
                 )
+
+                # Auto-package successful product
+                await execute_tool("package_product", {"product_name": product_name})
+
                 success_msg = f"LangGraph cycle success for '{product_name}'."
                 try:
                     await nats_service.publish_task(
@@ -253,6 +257,10 @@ class BrainInstance:
                     task_id=task_id,
                     log_event=True,
                 )
+
+                # Cleanup failed attempt to keep workspace memory-efficient
+                await execute_tool("file_manager", {"action": "delete", "filename": product_name})
+
                 try:
                     await nats_service.publish_task(
                         "swarm.task.failed", {"task_id": task_id, "reason": "Audit failed"}
@@ -305,7 +313,7 @@ class BrainInstance:
             task = None
             try:
                 with get_db() as db:
-                    if not swarm_governor.check_token_limit(db, self.name):
+                    if not await swarm_governor.check_token_limit(db, self.name):
                         self._set_progress(
                             "quota_locked",
                             "Daily token quota reached. Standing down.",
@@ -314,9 +322,9 @@ class BrainInstance:
                         await asyncio.sleep(600)
                         continue
 
-                    task = self._acquire_task(db)
+                    task = await self._acquire_task(db)
                     if not task:
-                        task = self._discover_work(db)
+                        task = await self._discover_work(db)
 
                 if task:
                     await self._execute_task_cycle(task)
@@ -331,9 +339,9 @@ class BrainInstance:
 
             await self._cooldown(task)
 
-    def _acquire_task(self, db: Session) -> TaskQueue | None:
+    async def _acquire_task(self, db: Session) -> TaskQueue | None:
         if self.current_task_id:
-            locked = swarm_repo.get_task(db, self.current_task_id)
+            locked = await swarm_repo.get_task(db, self.current_task_id)
             if locked and locked.status in {"running", "correction_needed"}:
                 logger.info(
                     f"[FORGE-AUDIT] Brain '{self.name}' - Resuming LOCKED Task #{locked.id}"
@@ -341,24 +349,25 @@ class BrainInstance:
                 return locked
             self.current_task_id = None
 
-        repairs = swarm_repo.list_tasks_by_brain(db, self.name, "correction_needed")
-        pending = swarm_repo.list_tasks_by_brain(db, self.name, "pending")
+        repairs = await swarm_repo.list_tasks_by_brain(db, self.name, "correction_needed")
+        pending = await swarm_repo.list_tasks_by_brain(db, self.name, "pending")
         return repairs[0] if repairs else (pending[0] if pending else None)
 
-    def _discover_work(self, db: Session) -> TaskQueue:
+    async def _discover_work(self, db: Session) -> TaskQueue:
         mission = swarm_governor.get_autonomous_mission_type(db)
         directive = getattr(swarm_manager, "global_directive", None)
 
         if directive:
-            logger.warning(f"[FORGE-AUDIT] Brain '{self.name}' executing USER DIRECTIVE: {directive}")
+            logger.warning(
+                f"[FORGE-AUDIT] Brain '{self.name}' executing USER DIRECTIVE: {directive}"
+            )
             payload = {
                 "niche": "User Directive",
                 "goal": directive,
             }
-            # Clear directive after one acquisition? Or keep it? 
-            # Usually better to keep it until changed or cleared manually.
+            target = "User Directive"
         elif mission == "reverse_engineering":
-            target = swarm_governor.get_synthesis_target(db)
+            target = await swarm_governor.get_synthesis_target(db)
             logger.warning(
                 f"[FORGE-AUDIT] Brain '{self.name}' activating Autonomous Synthesis: {target}"
             )
@@ -376,18 +385,18 @@ class BrainInstance:
                 tool="discover_new_niche",
                 log_event=True,
             )
-            target = execute_tool("discover_new_niche", {"depth": 5})
-            execute_tool("add_to_global_niches", {"niche": target})
-            payload = {"niche": target, "goal": "Autonomous Studio Expansion."}
+            target = await execute_tool("discover_new_niche", {"depth": 5})
+            await execute_tool("add_to_global_niches", {"niche": target})
+            payload = {"niche": target, "goal": "Studio Product Generation & Launch."}
 
-        task = swarm_repo.create_task(db, self.name, "production", json.dumps(payload))
+        task = await swarm_repo.create_task(db, self.name, "production", json.dumps(payload))
         self._set_progress("task_init", f"Mission: {target}.", task_id=task.id, log_event=True)
         return task
 
     async def _execute_task_cycle(self, task: TaskQueue):
         task_id = task.id
         with get_db() as db:
-            swarm_repo.update_task_status(db, task_id, "running")
+            await swarm_repo.update_task_status(db, task_id, "running")
 
         self._set_progress(
             "task_running", f"Task #{task_id} running.", task_id=task_id, log_event=True
@@ -409,8 +418,8 @@ class BrainInstance:
 
     async def _finalize_task(self, task_id: int, message: str):
         with get_db() as db:
-            swarm_repo.update_task_status(db, task_id, "completed")
-            swarm_governor.track_usage(db, self.name, tokens=random.randint(500, 2500))
+            await swarm_repo.update_task_status(db, task_id, "completed")
+            await swarm_governor.track_usage(db, self.name, tokens=random.randint(500, 2500))
 
         self._append_log("assistant", message)
         self.task_count += 1
@@ -435,13 +444,41 @@ class BrainInstance:
 class SwarmManager:
     def __init__(self):
         self.brains: dict[str, BrainInstance] = {}
+        self.global_directive = None
+
+    async def initialize(self):
+        """Perform async initialization of the swarm brains."""
         default_model = os.getenv("CURRENT_MODEL", "qwen2.5:7b")
-        # Initial industrial swarm setup
-        self.spawn("MasterBrain", os.getenv("CURRENT_MODEL", "llama-3.3-70b-versatile"), "director")
-        self.spawn("Dre", default_model, "coding")
-        self.spawn("Fenko", default_model, "mimic")
-        self.spawn("Codesmith", default_model, "coding")
-        self.spawn("Ava", default_model, "reasoning")
+        cloud_model = os.getenv("CLOUD_MODEL", "llama-3.3-70b-versatile")
+
+        is_lite = os.getenv("STUDIO_LITE_MODE") == "1"
+        is_power = os.getenv("STUDIO_POWER_MODE") == "1"
+
+        # 1. MasterBrain ALWAYS uses the high-tier Cloud model
+        await self.spawn("MasterBrain", cloud_model, "director")
+        # 2. TrendSifter uses the default local model for high-speed market discovery
+        await self.spawn("TrendSifter", default_model, "mimic")
+
+        if is_power:
+            # 2. POWER MODE (12-CORE OPTIMIZED): Spawn the specialist coder
+            logger.info("[SWARM-INIT] POWER MODE (12-Core): Activating specialized coding node.")
+            await self.spawn("Dre", default_model, "coding")
+        elif not is_lite:
+            # 3. FULL SWARM: All systems go
+            await self.spawn("Dre", default_model, "coding")
+            await self.spawn("Fenko", default_model, "mimic")
+            await self.spawn("Codesmith", default_model, "coding")
+            await self.spawn("Ava", default_model, "reasoning")
+        else:
+            logger.info("[SWARM-INIT] LITE MODE active: Spawning minimal brain cluster (2 nodes).")
+
+        # Load global directive
+        with get_db() as db:
+            self.global_directive = await asyncio.to_thread(
+                config_service.get_setting, db, "global_directive"
+            )
+            if self.global_directive:
+                logger.info(f"[SWARM-INIT] Restored Global Directive: {self.global_directive}")
 
         # Resume brains that were running before restart
         for brain in self.brains.values():
@@ -449,13 +486,24 @@ class SwarmManager:
                 brain.running = False
                 brain.start()
 
-        self.global_directive = None
-
     def set_directive(self, directive: str | None):
         self.global_directive = directive
         logger.info(f"[SWARM-DIRECTIVE] Global goal updated: {directive}")
 
-    def spawn(self, name: str, model: str, persona_type: str = "mimic"):
+        # Persist directive
+        async def _persist():
+            with get_db() as db:
+                await asyncio.to_thread(
+                    config_service.update_setting, db, "global_directive", directive or ""
+                )
+
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(_persist())
+        except RuntimeError:
+            pass
+
+    async def spawn(self, name: str, model: str, persona_type: str = "mimic"):
         if name in self.brains:
             self.brains[name].model = model
             self.brains[name].persona_type = persona_type
@@ -463,7 +511,9 @@ class SwarmManager:
 
         # --- CONCURRENCY CONSTRAINT (#6) ---
         with get_db() as db:
-            max_brains_str = config_service.get_setting(db, "max_active_brains")
+            max_brains_str = await asyncio.to_thread(
+                config_service.get_setting, db, "max_active_brains"
+            )
             max_brains = int(max_brains_str) if max_brains_str else 10
 
             active_count = sum(1 for b in self.brains.values() if b.running)

@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import importlib.util
 import inspect
@@ -177,6 +178,8 @@ def execute_custom_tool(name: str, args: dict[str, Any]) -> str | None:
         else {key: value for key, value in args.items() if key in signature.parameters}
     )
     result = entrypoint(**call_args)
+    if asyncio.iscoroutine(result):
+        return result
     if isinstance(result, (dict, list)):
         return json.dumps(result)
     return str(result)

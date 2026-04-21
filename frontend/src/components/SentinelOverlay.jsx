@@ -31,6 +31,7 @@ const SentinelOverlay = ({
           className="w-full text-center bg-black/40 border-red-500/20 text-red-500 font-mono"
           value={securityKey}
           onChange={(event) => onSecurityKeyChange(event.target.value)}
+          autoComplete="current-password"
         />
         <div className="flex gap-2">
           <button

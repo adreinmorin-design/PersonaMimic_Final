@@ -38,11 +38,12 @@ dependencies = [
     "nats-py>=2.7.0",
     "angr>=9.2.0",
     "semgrep>=1.65.0",
+    "psycopg2-binary>=2.9.11",
 ]
 
 [tool.uv]
 managed = true
-workspace = { members = ["backend"] }
+workspace = { members = ["backend", "workspace/Nexus_Sentinel_AI"] }
 
 [tool.ruff]
 line-length = 100
