@@ -1,25 +1,53 @@
-from typing import Any
+import asyncio
 import json
 import logging
+from typing import Any
 
 from app.database.memory_service import memory_service as memory_engine
 from app.swarm import tool_runtime
 
-# Import logic from domains
-from .base import tool_cache, SearchArgs, ComplianceArgs, FACTORY_MIN_SCORE
-from .search import web_search, web_fetch, maps_search
-from .engineering import (
-    file_manager, python_executor, shell_executor, system_monitor, 
-    performance_bridge, binary_analyzer, assemble_full_product, saas_architect,
-    FileManagerArgs, SaaSArchitectArgs
-)
-from .discovery import market_research, market_analyzer, discover_new_niche, add_to_global_niches, affiliate_researcher
-from .commerce import package_product, list_products, ecommerce_publisher, revenue_auditor, EcommerceArgs
-from .quality import validate_product, peer_review, objective_validator
-from .marketing import generate_marketing_copy, generate_whop_app, generate_app_visuals, social_publisher
-from .meta import create_custom_tool, spawn_sub_brain
-
 from ..compliance_service import compliance_service
+
+# Import logic from domains
+from .base import FACTORY_MIN_SCORE, ComplianceArgs, SearchArgs, tool_cache
+from .commerce import (
+    EcommerceArgs,
+    ecommerce_publisher,
+    list_products,
+    package_product,
+    revenue_auditor,
+)
+from .discovery import (
+    add_to_global_niches,
+    affiliate_researcher,
+    discover_new_niche,
+    market_analyzer,
+    market_research,
+    predictive_market_scout,
+)
+from .engineering import (
+    FileManagerArgs,
+    SaaSArchitectArgs,
+    assemble_full_product,
+    binary_analyzer,
+    file_manager,
+    performance_bridge,
+    python_executor,
+    saas_architect,
+    shell_executor,
+    system_monitor,
+)
+from .marketing import (
+    generate_app_visuals,
+    generate_marketing_copy,
+    generate_whop_app,
+    social_publisher,
+)
+from .meta import create_custom_tool, spawn_sub_brain
+from .orchestration import strategic_planner
+from .quality import objective_validator, peer_review, validate_product
+from .search import maps_search, web_fetch, web_search
+from .vcs import VCSArgs, vcs_manager
 
 logger = logging.getLogger("swarm.tools")
 
@@ -32,7 +60,8 @@ MUTATING_TOOLS = {
     "file_manager", "package_product", "create_custom_tool", "spawn_sub_brain",
     "social_publisher", "generate_marketing_copy", "generate_whop_app",
     "generate_app_visuals", "assemble_full_product", "ecommerce_publisher",
-    "python_executor", "shell_executor", "saas_architect", "generate_compliance_bundle"
+    "python_executor", "shell_executor", "saas_architect", "generate_compliance_bundle",
+    "vcs_manager"
 }
 
 CACHEABLE_TOOLS = {"web_search", "web_fetch", "market_research"}
@@ -52,7 +81,7 @@ TOOLS = [
     {"name": "assemble_full_product", "description": "Build asset.", "parameters": {"type": "object", "properties": {"product_name": {"type": "string"}, "product_type": {"type": "string"}}, "required": ["product_name", "product_type"]}},
     {"name": "discover_new_niche", "description": "Scan niches.", "parameters": {"type": "object", "properties": {"depth": {"type": "integer"}}}},
     {"name": "generate_compliance_bundle", "description": "Generate Legal & FAQ.", "parameters": ComplianceArgs.model_json_schema()},
-    # ... other tools
+    {"name": "vcs_manager", "description": "Git/GitHub Persistence and Quality Control.", "parameters": VCSArgs.model_json_schema()},
 ]
 
 TOOL_HANDLERS = {
@@ -72,7 +101,7 @@ TOOL_HANDLERS = {
     "revenue_auditor": lambda a: revenue_auditor(a.get("days", 7)),
     "saas_architect": lambda a: saas_architect(a.get("product_name"), a.get("niche"), a.get("stack"), a.get("features")),
     "affiliate_researcher": lambda a: affiliate_researcher(a.get("niche")),
-    "assemble_full_product": lambda a: assemble_full_product(a.get("product_name"), a.get("niche"), a.get("product_type"), a.get("specs")),
+    "assemble_full_product": lambda a: assemble_full_product(a.get("product_name"), a.get("niche"), a.get("product_type"), a.get("specs"), a.get("feedback", "")),
     "generate_marketing_copy": lambda a: generate_marketing_copy(a.get("product_name"), a.get("niche")),
     "generate_whop_app": lambda a: generate_whop_app(a.get("product_name"), a.get("niche")),
     "generate_app_visuals": lambda a: generate_app_visuals(a.get("product_name"), a.get("description")),
@@ -80,13 +109,16 @@ TOOL_HANDLERS = {
     "discover_new_niche": lambda a: discover_new_niche(a.get("depth", 5)),
     "add_to_global_niches": lambda a: add_to_global_niches(a.get("niche")),
     "maps_search": lambda a: maps_search(a.get("location_query")),
+    "predictive_market_scout": lambda a: predictive_market_scout(a.get("current_niche")),
     "binary_analyzer": lambda a: binary_analyzer(a.get("filename"), a.get("scan_type")),
     "objective_validator": lambda a: objective_validator(a.get("product_name")),
     "performance_bridge": lambda a: performance_bridge(a.get("code"), a.get("language")),
     "generate_compliance_bundle": lambda a: generate_compliance_bundle(a.get("product_name"), a.get("niche"), a.get("specs")),
+    "strategic_planner": lambda a: strategic_planner(a.get("niche"), a.get("current_specs")),
+    "vcs_manager": lambda a: vcs_manager(a.get("action"), a.get("message"), a.get("files"), a.get("branch", "main"), a.get("remote", "origin"), a.get("run_quality", True)),
 }
 
-def execute_tool(name: str, args: dict[str, Any]) -> str:
+async def execute_tool(name: str, args: dict[str, Any], brain_name: str = "System") -> str:
     cache_key = f"{name}:{json.dumps(args, sort_keys=True, default=str)}"
     if name in CACHEABLE_TOOLS:
         hit = tool_cache.get(cache_key)
@@ -95,16 +127,26 @@ def execute_tool(name: str, args: dict[str, Any]) -> str:
     try:
         handler = TOOL_HANDLERS.get(name)
         if handler:
+            # We call the handler; if it's sync and blocking it runs here (less ideal)
+            # but if it returns a coroutine (like our tool lambdas now do), we await it.
             result = handler(args)
+            if asyncio.iscoroutine(result):
+                result = await result
         else:
-            from app.swarm import tool_runtime
-            custom_result = tool_runtime.execute_custom_tool(name, args)
-            result = custom_result if custom_result is not None else f"Unknown tool: {name}"
+            result = tool_runtime.execute_custom_tool(name, args)
+            if asyncio.iscoroutine(result):
+                result = await result
+            if result is None:
+                result = f"Unknown tool: {name}"
 
         if result and not tool_runtime.is_failure_result(result):
             if name in CACHEABLE_TOOLS: tool_cache.add(cache_key, result)
             if name in MUTATING_TOOLS:
-                memory_engine.store_tool_outcome(tool_name=name, tool_args=args, result=result, brain_name="System")
+                outcome_res = memory_engine.store_tool_outcome(
+                    tool_name=name, tool_args=args, result=result, brain_name=brain_name
+                )
+                if asyncio.iscoroutine(outcome_res):
+                    await outcome_res
         return result
     except Exception as e:
         logger.error(f"[TOOL ERROR] {e}")

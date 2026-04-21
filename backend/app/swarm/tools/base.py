@@ -1,12 +1,12 @@
+import datetime
 import logging
 import os
-import json
-import datetime
 from typing import Any
-from pydantic import BaseModel, Field
 
-from app.core.paths import BACKEND_DIR, CUSTOM_TOOLS_DIR, WORKSPACE_DIR
-from app.swarm import workspace_utils, tool_runtime
+from pydantic import BaseModel
+
+from app.core.paths import CUSTOM_TOOLS_DIR, WORKSPACE_DIR
+from app.swarm import tool_runtime, workspace_utils
 
 logger = logging.getLogger("swarm.tools.base")
 
@@ -134,13 +134,16 @@ class SemanticCache:
         except Exception as exc:
             logger.debug("Cache insert failed: %s", exc)
 
-def _persist_product_state(product_name: str, **kwargs):
+async def _persist_product_state(product_name: str, **kwargs):
     from app.database.database import SessionLocal
     from app.products.repository import product_repo
-    db = SessionLocal()
     try:
-        product_repo.update_state(db, product_name, **kwargs)
-    finally:
-        db.close()
+        db = SessionLocal()
+        try:
+            await product_repo.update_state(db, product_name, **kwargs)
+        finally:
+            db.close()
+    except Exception as exc:
+        logger.warning(f"[DB-AWARE] Could not persist state for {product_name}: {exc}. Continuing launch...")
 
 tool_cache = SemanticCache()
