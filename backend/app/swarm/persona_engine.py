@@ -419,6 +419,10 @@ class PersonaEngine:
             await asyncio.sleep(random.uniform(0.5, 2.5))
             return await self._execute_cloud_oss_inference(messages)
 
+        # Local Jitter for industrial stability
+        import random
+        await asyncio.sleep(random.uniform(0.2, 1.0))
+
         response = await self.client.chat(
             model=self.model,
             messages=messages,

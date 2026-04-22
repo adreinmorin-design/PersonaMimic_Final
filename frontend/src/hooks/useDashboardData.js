@@ -50,24 +50,26 @@ export function useDashboardData({ activeTab, showSentinel }) {
     let cancelled = false;
 
     const bootstrap = async () => {
+      // 1. Core Health & Config (Fast)
       try {
-        const [healthResponse, modelsResponse, productsResponse] = await Promise.all([
-          api.get('/config/health'),
-          api.get('/config/models'),
-          api.get('/products'),
-        ]);
-
-        if (cancelled) {
-          return;
+        const healthResponse = await api.get('/config/health');
+        if (!cancelled) {
+          setSelectedModel(healthResponse.data.model || DEFAULT_MODEL);
+          setUseCloud(Boolean(healthResponse.data.cloud));
         }
+      } catch (e) { console.error('Health fetch failed:', e); }
 
-        setSelectedModel(healthResponse.data.model || DEFAULT_MODEL);
-        setUseCloud(Boolean(healthResponse.data.cloud));
-        setModels(modelsResponse.data.models || []);
-        setProducts(productsResponse.data.products || []);
-      } catch (error) {
-        console.error('Initialization fetch failed:', error);
-      }
+      // 2. Models (Can be slow if Ollama is busy)
+      try {
+        const modelsResponse = await api.get('/config/models');
+        if (!cancelled) setModels(modelsResponse.data.models || []);
+      } catch (e) { console.error('Models fetch failed:', e); }
+
+      // 3. Products
+      try {
+        const productsResponse = await api.get('/products');
+        if (!cancelled) setProducts(productsResponse.data.products || []);
+      } catch (e) { console.error('Products fetch failed:', e); }
     };
 
     bootstrap();

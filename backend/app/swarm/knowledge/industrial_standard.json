@@ -1,0 +1,40 @@
+{
+  "standard_name": "PersonaMimic Industrial Quality & Persistence Standard",
+  "version": "2.0",
+  "vcs_persistence": {
+    "tool": "vcs_manager",
+    "required_actions": ["status", "add", "commit", "push"],
+    "quality_gate": {
+      "formatter": "ruff format",
+      "linter": "ruff check --fix",
+      "enforcement": "Mandatory on every commit unless explicitly toggled"
+    },
+    "commit_conventions": {
+      "feat": "New functionality or tools",
+      "fix": "Bug fixes or linting corrections",
+      "hygiene": "Cleanup, de-duplication, or repository maintenance",
+      "docs": "Documentation updates in /knowledge or READMEs"
+    }
+  },
+  "aesthetic_standards": {
+    "typography": ["Inter", "Roboto Mono", "Outfit"],
+    "color_palette": {
+      "primary": "Cyan-400 to Blue-500 Gradients",
+      "background": "Slate-900 / Zinc-950",
+      "accent": "Emerald-400 (Success), Rose-500 (Error)"
+    },
+    "ui_elements": [
+      "Glassmorphism (backdrop-blur-md)",
+      "Micro-animations (animate-pulse, transition-all)",
+      "High-contrast mono labels"
+    ]
+  },
+  "swarm_communication": {
+    "bus": "NATS",
+    "subjects": {
+      "task_lifecycle": "swarm.task.*",
+      "telemetry": "swarm.telemetry.>",
+      "brain_sync": "swarm.brain.sync"
+    }
+  }
+}

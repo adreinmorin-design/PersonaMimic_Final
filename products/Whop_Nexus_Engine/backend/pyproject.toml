@@ -1,0 +1,12 @@
+[project]
+name = "whop-nexus-engine-backend"
+version = "0.1.0"
+description = "Industrial Digital Product Distribution via Whop"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.27.0",
+    "python-dotenv>=1.0.1",
+]
+
+[tool.uv]
+managed = true

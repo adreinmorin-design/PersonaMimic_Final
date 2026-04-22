@@ -43,7 +43,7 @@ dependencies = [
 
 [tool.uv]
 managed = true
-workspace = { members = ["backend", "workspace/Nexus_Sentinel_AI"] }
+workspace = { members = ["backend", "workspace/Nexus_Sentinel_AI", "products/Whop_Nexus_Engine/backend"] }
 
 [tool.ruff]
 line-length = 100

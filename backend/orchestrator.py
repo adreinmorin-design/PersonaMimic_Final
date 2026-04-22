@@ -131,17 +131,22 @@ class AIOrchestrator:
     async def _kill_process_on_port(self, port: int, current_pid: int):
         """Atomic helper to clear port bindings."""
         try:
-            # We use PowerShell for more robust process identification
-            ps_cmd = f"Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess"
-            proc = await asyncio.create_subprocess_exec(
-                "powershell",
-                "-Command",
-                ps_cmd,
+            # Use netstat which is much faster and less prone to hanging than PowerShell WMI calls
+            cmd = f'netstat -ano | findstr "LISTENING" | findstr ":{port}"'
+            proc = await asyncio.create_subprocess_shell(
+                cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
             stdout, _ = await proc.communicate()
-            for pid_str in stdout.decode().splitlines():
+            
+            pids = set()
+            for line in stdout.decode().splitlines():
+                parts = line.strip().split()
+                if len(parts) >= 5:
+                    pids.add(parts[-1])
+            
+            for pid_str in pids:
                 pid = pid_str.strip()
                 if pid and pid.isdigit() and int(pid) != current_pid and pid != "0":
                     logger.info(f"Terminating rogue PID {pid} on port {port}")

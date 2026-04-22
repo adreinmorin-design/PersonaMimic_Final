@@ -213,7 +213,7 @@ const App = () => {
               </AnimatePresence>
             </div>
 
-            {isConfigured && <Sidebar autonomyLog={autonomyLog} />}
+            {isConfigured && <Sidebar autonomyLog={autonomyLog} swarmStatus={swarmStatus} />}
           </div>
         )}
 
