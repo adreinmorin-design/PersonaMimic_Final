@@ -101,7 +101,7 @@ export function useDashboardData({ activeTab, showSentinel }) {
     let autonomyIntervalId;
     let revenueIntervalId;
 
-    if (activeTab === 'autonomy') {
+    if (activeTab === 'forge') {
       runRefresh(refreshAutonomy, 'Autonomy status poll');
       autonomyIntervalId = window.setInterval(() => {
         runRefresh(refreshAutonomy, 'Autonomy status poll');
