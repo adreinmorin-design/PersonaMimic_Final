@@ -448,7 +448,7 @@ class SwarmManager:
 
     async def initialize(self):
         """Perform async initialization of the swarm brains."""
-        default_model = os.getenv("CURRENT_MODEL", "qwen2.5:7b")
+        default_model = os.getenv("CURRENT_MODEL", "qwen2.5-coder:7b")
         cloud_model = os.getenv("CLOUD_MODEL", "llama-3.3-70b-versatile")
 
         is_lite = os.getenv("STUDIO_LITE_MODE") == "1"

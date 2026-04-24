@@ -180,7 +180,7 @@ class AIOrchestrator:
 
     async def ensure_llm_models(self):
         """Ensure required local models are downloaded with non-blocking feedback."""
-        required_models = ["qwen2.5:7b", "qwen2.5-coder:32b", "deepseek-r1:7b"]
+        required_models = ["qwen2.5-coder:7b", "qwen2.5-coder:7b", "qwen2.5-coder:7b"]
         logger.info("Verifying LLM model availability...")
 
         for model in required_models:
@@ -280,7 +280,7 @@ class AIOrchestrator:
             return
 
         logger.info("Launching UX Dashboard via npm...")
-        cmd = "npm run dev"
+        cmd = "npx vite --host 0.0.0.0 --port 5173"
         self.processes["frontend"] = await asyncio.create_subprocess_shell(
             cmd, cwd=FRONTEND_DIR, stdout=sys.stdout, stderr=sys.stderr
         )

@@ -23,7 +23,7 @@ async def get_swarm_status() -> str:
 
 @mcp.tool()
 async def spawn_autonomous_brain(
-    name: str, model: str = "qwen2.5:7b", target_niche: str = ""
+    name: str, model: str = "qwen2.5-coder:7b", target_niche: str = ""
 ) -> str:
     """
     Launch an autonomous product factory brain to hunt, strategize, build, and publish.

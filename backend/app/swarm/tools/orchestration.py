@@ -15,8 +15,8 @@ async def strategic_planner(niche: str, current_specs: str = ""):
         import os
 
         # Step 1: Deep Reasoning (Think)
-        # We use deepseek-r1:7b for its superior chain-of-thought capabilities
-        reasoning_engine = PersonaEngine(model="deepseek-r1:7b")
+        # We use qwen2.5-coder:7b for its superior chain-of-thought capabilities
+        reasoning_engine = PersonaEngine(model="qwen2.5-coder:7b")
         thought_prompt = (
             f"STRATEGIC THINKING: You are the Lead Architect for PersonaMimic.\n"
             f"MISSION: Build a product in the '{niche}' niche.\n"
@@ -26,7 +26,7 @@ async def strategic_planner(niche: str, current_specs: str = ""):
             "Output your chain of thought on how to build this perfectly."
         )
 
-        logger.info("Orchestrator: Engaging Reasoning Engine (DeepSeek-R1)...")
+        logger.info("Orchestrator: Engaging Reasoning Engine (Qwen-Coder)...")
         thought_res = await reasoning_engine.generate_response(
             thought_prompt, persona_type="reasoning"
         )
@@ -34,7 +34,7 @@ async def strategic_planner(niche: str, current_specs: str = ""):
 
         # Step 2: Formal Architecture (Do)
         # We use the 32B Coder model (or cloud fallback) to turn thoughts into a manifest
-        model = os.getenv("CLOUD_MODEL", "qwen2.5-coder:32b")
+        model = os.getenv("CLOUD_MODEL", "qwen2.5-coder:7b")
         engine = PersonaEngine(model=model)
 
         logger.info(f"Orchestrator: Engaging Architecture Engine ({model})...")

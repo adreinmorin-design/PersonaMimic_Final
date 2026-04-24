@@ -22,7 +22,7 @@ class SynthesisAgent:
     Bridges the gap between Mechanistic Interpretability and Code Generation.
     """
 
-    def __init__(self, model_name: str = "qwen2.5:7b"):
+    def __init__(self, model_name: str = "qwen2.5-coder:7b"):
         self.engine = PersonaEngine(model=model_name)
 
     @staticmethod

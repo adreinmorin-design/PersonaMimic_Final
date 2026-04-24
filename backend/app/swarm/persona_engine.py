@@ -30,7 +30,7 @@ from app.forge.mapper import knowledge_mapper
 
 logger = logging.getLogger("swarm.persona_engine")
 LOCAL_OLLAMA_HOST = "http://127.0.0.1:11434"
-MODEL_FALLBACK = "qwen2.5:7b"
+MODEL_FALLBACK = "qwen2.5-coder:7b"
 CLOUD_TIMEOUT_SECONDS = float(os.getenv("CLOUD_TIMEOUT_SECONDS", "25"))
 
 
@@ -193,7 +193,7 @@ class PersonaEngine:
             and any(x in str(configured_model).lower() for x in ["mixtral", "gpt"])
             and "coder" not in str(configured_model).lower()
         ):
-            configured_model = "qwen2.5:7b"
+            configured_model = "qwen2.5-coder:7b"
 
         # 1. Try vLLM (High-Speed Inference)
         vllm_host = os.getenv("VLLM_URL", "http://localhost:8000")

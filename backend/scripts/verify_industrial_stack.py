@@ -34,7 +34,7 @@ async def run_verification():
     # 2. Test vLLM/ROCm Runtime Resolution
     print("\n[2/6] vLLM Runtime Probe...")
     try:
-        engine = PersonaEngine(model="qwen2.5:7b")
+        engine = PersonaEngine(model="qwen2.5-coder:7b")
         print(f" -> Current Host: {engine.host}")
         print(f" -> Mode: {'vLLM/ROCm' if engine.is_vllm else 'Ollama/Standard'}")
     except Exception as e:

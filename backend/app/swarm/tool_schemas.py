@@ -32,7 +32,7 @@ class LaunchArgs(BaseModel):
 
 class SpawnArgs(BaseModel):
     name: str
-    model: str = "qwen2.5:7b"
+    model: str = "qwen2.5-coder:7b"
     persona_type: str = "coding"
     niche: str = ""
 

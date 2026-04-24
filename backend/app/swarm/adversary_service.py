@@ -233,7 +233,7 @@ Respond ONLY with JSON:
 
 class AdversaryAgent:
     def __init__(self, model: str = None):
-        self.model = model or os.getenv("ADVERSARY_MODEL", "llama3:latest")
+        self.model = model or os.getenv("ADVERSARY_MODEL", "llama3.1:latest")
         host = (os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434") or "").strip()
         if not host:
             host = "http://127.0.0.1:11434"
@@ -261,7 +261,7 @@ class AdversaryAgent:
         else:
             if ":" not in self.model:
                 candidates.append(f"{self.model}:latest")
-            candidates.extend(["llama3:latest", "qwen2.5:7b"])
+            candidates.extend(["llama3.1:latest", "qwen2.5-coder:7b"])
         return list(dict.fromkeys(c for c in candidates if c))
 
     async def _chat_with_fallback(self, messages: list[dict]) -> str:
