@@ -1,0 +1,84 @@
+{
+  "name": "PersonaMimic Industrial Loop",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "trigger-mission",
+        "options": {}
+      },
+      "id": "184b238d-0b73-4567-8901-234567890123",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ],
+      "webhookId": "trigger-mission"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8055/n8n/trigger-swarm",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "niche",
+              "value": "={{ $json.body.niche || \"General Market\" }}"
+            },
+            {
+              "name": "goal",
+              "value": "={{ $json.body.goal || \"Automated Synthesis\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "234b238d-0b73-4567-8901-234567890456",
+      "name": "Trigger Swarm API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Industrial Loop Orchestrator\nThis workflow receives a mission from an external source (or manual trigger) and commands the PersonaMimic Swarm to begin synthesis."
+      },
+      "id": "334b238d-0b73-4567-8901-234567890789",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        80,
+        140
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Trigger Swarm API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "hash": "abc123hash",
+  "id": "1",
+  "meta": {
+    "instanceId": "persona-mimic-instance"
+  }
+}

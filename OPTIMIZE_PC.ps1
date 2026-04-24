@@ -93,7 +93,13 @@ Write-Host "`n--- PHASE 3: INFRASTRUCTURE SYNC ---" -ForegroundColor $HeaderColo
 if (Test-Path "docker-compose.yml") {
     Write-Step "Resetting Docker Infrastructure (Orphans and Volumes)"
     docker-compose down --remove-orphans 2>$null
-    docker system prune -f --volumes 2>$null
+    # Default to a non-destructive prune. Set PICO_PRUNE_VOLUMES=1 to also delete volumes (will wipe Postgres/Redis data).
+    if ($env:PICO_PRUNE_VOLUMES -eq "1") {
+        docker system prune -f --volumes 2>$null
+    } else {
+        docker system prune -f 2>$null
+        Write-Warning "Skipped Docker volume prune (set PICO_PRUNE_VOLUMES=1 to enable)."
+    }
     Write-Success "Docker environment reset."
 }
 

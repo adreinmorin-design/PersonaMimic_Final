@@ -5,25 +5,38 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8055:8055"
+      - "127.0.0.1:8055:8055"
     environment:
       - DATABASE_URL=postgresql://mimic:mimic@postgres:5432/personamimic
       - REDIS_URL=redis://redis:6379/0
+      - NATS_URL=nats://nats:4222
       - ENVIRONMENT=production
     env_file:
       - ./backend/.env
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8055/system/health', timeout=2).read()\""]
+      interval: 10s
+      timeout: 3s
+      retries: 10
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "127.0.0.1:80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 
   postgres:
     image: pgvector/pgvector:pg16
@@ -34,21 +47,64 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mimic -d personamimic"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   nats:
-    image: nats:latest
+    image: nats:2
     ports:
-      - "4222:4222"
-      - "8222:8222" # Monitor port
+      - "127.0.0.1:4222:4222"
+      - "127.0.0.1:8222:8222" # Monitor port
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  n8n:
+    image: n8nio/n8n:1
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - NODES_EXCLUDE=[]
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=UTC
+      - DATABASE_TYPE=postgresdb
+      - DATABASE_POSTGRESDB_HOST=postgres
+      - DATABASE_POSTGRESDB_PORT=5432
+      - DATABASE_POSTGRESDB_DATABASE=personamimic
+      - DATABASE_POSTGRESDB_USER=mimic
+      - DATABASE_POSTGRESDB_PASSWORD=mimic
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n:/home/node/n8n
+      - ./products:/home/node/products
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data:
   redis_data:
+  n8n_data:

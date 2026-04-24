@@ -15,6 +15,7 @@ from app.reverse_engineering.router import router as reverse_engineering_router
 from app.swarm.router import router as swarm_router
 from app.system.router import router as system_router
 from app.voice.router import router as voice_router
+from app.n8n.router import router as n8n_router
 
 
 def create_app() -> FastAPI:
@@ -34,6 +35,7 @@ def create_app() -> FastAPI:
     app.include_router(forge_router)
     app.include_router(reverse_engineering_router)
     app.include_router(system_router)
+    app.include_router(n8n_router)
 
     @app.get("/")
     async def index():

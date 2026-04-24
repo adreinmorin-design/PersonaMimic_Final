@@ -1,0 +1,27 @@
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.venv_broken/
+**/.venv_broken/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Node
+**/node_modules/
+
+# Local data/artifacts
+logs/
+workspace/
+scratch/
+*.db
+*.sqlite3
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/

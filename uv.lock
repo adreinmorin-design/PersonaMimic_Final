@@ -18,7 +18,6 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "nexus-sentinel-ai",
     "personamimic-backend",
     "personamimic-industrial",
     "whop-nexus-engine-backend",
@@ -2464,23 +2463,6 @@ wheels = [
 ]
 
 [[package]]
-name = "nexus-sentinel-ai"
-version = "2.0.0"
-source = { editable = "workspace/Nexus_Sentinel_AI" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "pydantic" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi" },
-    { name = "pydantic" },
-    { name = "uvicorn" },
-]
-
-[[package]]
 name = "nltk"
 version = "3.9.4"
 source = { registry = "https://pypi.org/simple" }
@@ -3385,7 +3367,7 @@ version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aiofiles" },
-    { name = "angr" },
+    { name = "bcrypt" },
     { name = "beautifulsoup4" },
     { name = "chromadb" },
     { name = "cryptography" },
@@ -3401,6 +3383,7 @@ dependencies = [
     { name = "ollama" },
     { name = "openai-whisper" },
     { name = "pandas" },
+    { name = "passlib", extra = ["bcrypt"] },
     { name = "psutil" },
     { name = "psycopg2-binary" },
     { name = "pydantic" },
@@ -3423,7 +3406,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aiofiles", specifier = ">=23.2.1" },
-    { name = "angr", specifier = ">=9.2.0" },
+    { name = "bcrypt", specifier = ">=4.1.2" },
     { name = "beautifulsoup4", specifier = ">=4.12.3" },
     { name = "chromadb", specifier = ">=0.4.24" },
     { name = "cryptography", specifier = ">=42.0.5" },
@@ -3439,6 +3422,7 @@ requires-dist = [
     { name = "ollama", specifier = ">=0.1.7" },
     { name = "openai-whisper", specifier = ">=20231117" },
     { name = "pandas", specifier = ">=2.2.1" },
+    { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "psutil", specifier = ">=5.9.8" },
     { name = "psycopg2-binary", specifier = ">=2.9.11" },
     { name = "pydantic", specifier = ">=2.6.3" },

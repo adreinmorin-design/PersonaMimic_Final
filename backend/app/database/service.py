@@ -62,21 +62,32 @@ class DatabaseService:
                     "BRAND_NAME",
                     "OLLAMA_CLOUD_KEY",
                     "OLLAMA_CLOUD_URL",
+                    "OPENAI_API_KEY",
+                    "GROQ_API_KEY",
+                    "ELEVENLABS_API_KEY",
+                    "GOOGLE_API_KEY",
+                    "USE_CLOUD",
+                    "CURRENT_MODEL",
                 ]
                 for key in env_keys:
                     val = os.getenv(key)
                     if not val:
                         continue
 
-                    existing = db.query(SystemSetting).filter(SystemSetting.key == key).first()
+                    # Map env keys to internal db keys if necessary
+                    db_key = key.lower() if key in ["USE_CLOUD", "CURRENT_MODEL"] else key
+                    if db_key == "current_model":
+                        db_key = "model"
+
+                    existing = db.query(SystemSetting).filter(SystemSetting.key == db_key).first()
                     encrypted_val = config_service.encrypt(val)
 
                     if not existing:
-                        db.add(SystemSetting(key=key, value=encrypted_val, is_encrypted=True))
-                        logger.info(f"[VAULT] Mirrored {key} to system settings.")
+                        db.add(SystemSetting(key=db_key, value=encrypted_val, is_encrypted=True))
+                        logger.info(f"[VAULT] Mirrored {key} to system settings as {db_key}.")
                     elif existing.value != encrypted_val:
                         existing.value = encrypted_val
-                        logger.info(f"[VAULT] Updated {key} in system settings.")
+                        logger.info(f"[VAULT] Updated {db_key} in system settings.")
 
                 # 3. Seed reverse-engineering target catalog
                 from app.reverse_engineering.repository import reverse_engineering_repo
