@@ -1,5 +1,6 @@
 import asyncio
 
+from sqlalchemy import String, func, literal
 from sqlalchemy.orm import Session
 
 from app.products.models import Product
@@ -31,15 +32,31 @@ class ProductRepository:
     async def find_fuzzy(self, db: Session, normalized_name: str) -> Product | None:
         return await asyncio.to_thread(self._find_fuzzy_sync, db, normalized_name)
 
+    @staticmethod
+    def _normalized_name_expr():
+        return func.lower(func.replace(func.coalesce(Product.name, ""), " ", "_"))
+
     def _find_fuzzy_sync(self, db: Session, normalized_name: str) -> Product | None:
-        all_products = db.query(Product).order_by(Product.created_at.desc()).all()
-        for candidate in all_products:
-            c_name = (candidate.name or "").strip().lower().replace(" ", "_")
-            if c_name and (
-                c_name == normalized_name or normalized_name in c_name or c_name in normalized_name
-            ):
-                return candidate
-        return None
+        normalized_name = (normalized_name or "").strip().lower()
+        if not normalized_name:
+            return None
+
+        normalized_expr = self._normalized_name_expr()
+        return (
+            db.query(Product)
+            .filter(normalized_expr != "")
+            .filter(
+                (normalized_expr == normalized_name)
+                | normalized_expr.contains(normalized_name)
+                | literal(normalized_name, type_=String).contains(normalized_expr)
+            )
+            .order_by(
+                (normalized_expr == normalized_name).desc(),
+                func.length(normalized_expr).desc(),
+                Product.created_at.desc(),
+            )
+            .first()
+        )
 
     async def list_all(self, db: Session) -> list[Product]:
         return await asyncio.to_thread(self._list_all_sync, db)

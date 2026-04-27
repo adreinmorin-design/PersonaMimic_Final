@@ -1,6 +1,7 @@
 import asyncio
 import json
 
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.reverse_engineering.catalog import BUILTIN_AGENT_TARGETS
@@ -22,7 +23,13 @@ class ReverseEngineeringRepository:
         await asyncio.to_thread(self._seed_builtin_targets_sync, db)
 
     def _seed_builtin_targets_sync(self, db: Session) -> None:
-        existing = {target.target_id: target for target in db.query(AgentTarget).all()}
+        builtin_ids = [str(item["target_id"]) for item in BUILTIN_AGENT_TARGETS]
+        existing = {
+            target.target_id: target
+            for target in db.query(AgentTarget)
+            .filter(AgentTarget.target_id.in_(builtin_ids))
+            .all()
+        }
         for item in BUILTIN_AGENT_TARGETS:
             target_id = str(item["target_id"])
             row = existing.get(target_id)
@@ -98,7 +105,23 @@ class ReverseEngineeringRepository:
         if not normalized:
             return None
 
-        for target in self._list_targets_sync(db):
+        normalized_name = func.lower(func.trim(AgentTarget.name))
+        target = (
+            db.query(AgentTarget)
+            .filter(or_(AgentTarget.target_id == normalized, normalized_name == normalized))
+            .order_by(AgentTarget.is_builtin.desc(), AgentTarget.name.asc())
+            .first()
+        )
+        if target:
+            return target
+
+        likely_alias_matches = (
+            db.query(AgentTarget)
+            .filter(AgentTarget.aliases.contains(normalized))
+            .order_by(AgentTarget.is_builtin.desc(), AgentTarget.name.asc())
+            .all()
+        )
+        for target in likely_alias_matches:
             if normalized == self._normalize_key(target.target_id):
                 return target
             if normalized == self._normalize_key(target.name):
@@ -174,6 +197,25 @@ class ReverseEngineeringRepository:
 
     def _list_jobs_by_status_sync(self, db: Session, status: str) -> list[SynthesisJob]:
         return db.query(SynthesisJob).filter(SynthesisJob.status == status).all()
+
+    async def get_job_metrics_by_status(self, db: Session, status: str) -> dict[str, object]:
+        return await asyncio.to_thread(self._get_job_metrics_by_status_sync, db, status)
+
+    def _get_job_metrics_by_status_sync(self, db: Session, status: str) -> dict[str, object]:
+        normalized_status = self._normalize_key(status)
+        base_query = db.query(SynthesisJob).filter(SynthesisJob.status == normalized_status)
+        job_count = base_query.count()
+        capabilities = [
+            target
+            for (target,) in (
+                db.query(SynthesisJob.target)
+                .filter(SynthesisJob.status == normalized_status, SynthesisJob.target.isnot(None))
+                .distinct()
+                .all()
+            )
+            if target
+        ]
+        return {"job_count": job_count, "capabilities": capabilities}
 
     async def list_all_jobs(self, db: Session) -> list[SynthesisJob]:
         return await asyncio.to_thread(self._list_all_jobs_sync, db)

@@ -15,6 +15,32 @@ class ProductsService:
         return db.query(Product).order_by(Product.created_at.desc()).all()
 
     @staticmethod
+    def get_product_summaries(db: Session) -> list[dict[str, Any]]:
+        rows = (
+            db.query(
+                Product.id,
+                Product.name,
+                Product.status,
+                Product.url,
+                Product.path,
+                Product.created_at,
+            )
+            .order_by(Product.created_at.desc())
+            .all()
+        )
+        return [
+            {
+                "id": product_id,
+                "name": name,
+                "status": status,
+                "url": url,
+                "path": path,
+                "created_at": created_at.strftime("%Y-%m-%d %H:%M") if created_at else None,
+            }
+            for product_id, name, status, url, path, created_at in rows
+        ]
+
+    @staticmethod
     def get_product_by_name(db: Session, name: str) -> Product | None:
         return db.query(Product).filter(Product.name == name).first()
 
@@ -49,7 +75,7 @@ class ProductsService:
                     product.sales_count += 1
                     product.total_revenue += amount
                     db.commit()
-                    logger.info(f"[WHOP WEBHOOK] Sale recorded for {product.name}: ${amount}")
+                    logger.info("[WHOP WEBHOOK] Sale recorded for %s: $%s", product.name, amount)
         return {"status": "success"}
 
 

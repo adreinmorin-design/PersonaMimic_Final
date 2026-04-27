@@ -1,9 +1,12 @@
 import os
+import logging
 
 import logfire
 import sentry_sdk
 from fastapi import FastAPI
 from sentry_sdk.integrations.fastapi import FastApiIntegration
+
+logger = logging.getLogger("observability")
 
 
 def setup_observability(app: FastAPI):
@@ -20,7 +23,7 @@ def setup_observability(app: FastAPI):
             traces_sample_rate=0.1,
             environment=os.getenv("ENVIRONMENT", "production"),
         )
-        print("Sentry Observability Integration Active (SaaS).")
+        logger.info("Sentry observability integration active.")
 
     # 2. Logfire (SaaS Tracing - Opt-in only)
     # Defaulting to False to ensure 100% local operation without tokens.
@@ -31,6 +34,6 @@ def setup_observability(app: FastAPI):
     logfire.instrument_fastapi(app)
 
     if logfire_token:
-        print("Logfire Neural Tracing Active (SaaS).")
+        logger.info("Logfire tracing active.")
     else:
-        print("Local Structured Logging Active (Open Source).")
+        logger.info("Local structured logging active.")

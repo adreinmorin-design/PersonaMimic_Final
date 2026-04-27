@@ -1,40 +1,35 @@
 import os
 from contextlib import contextmanager
+import logging
 
 from dotenv import load_dotenv
-
-# Force load environment before any SQLAlchemy initialization
-print('dotenv loaded'); load_dotenv()
+load_dotenv()
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.core.paths import DATABASE_PATH
 
-# Standard DATABASE_URL override for cloud deployment (Postgres)
-# Fallback to local SQLite for development
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DATABASE_PATH.as_posix()}")
 
-from sqlalchemy.pool import NullPool
-
 is_sqlite = DATABASE_URL.startswith("sqlite")
+logger = logging.getLogger("database")
 
 if is_sqlite:
     engine_args = {
         "connect_args": {"check_same_thread": False},
-        "poolclass": NullPool
     }
 else:
     engine_args = {
-        "pool_pre_ping": True, 
-        "pool_size": 20, 
-        "max_overflow": 10
+        "pool_pre_ping": True,
+        "pool_size": 20,
+        "max_overflow": 10,
     }
 
-print('creating engine'); engine = create_engine(DATABASE_URL, **engine_args); print('engine created')
+engine = create_engine(DATABASE_URL, **engine_args)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-print('base created'); Base = declarative_base()
+Base = declarative_base()
 
 
 # --- SQLite Performance & Robustness Hooks ---
@@ -57,16 +52,15 @@ def get_db():
         try:
             db.close()
         except Exception as e:
-            import logging
-            logging.getLogger("database").debug(f"Failed to close db session cleanly: {e}")
+            logger.debug("Failed to close db session cleanly: %s", e)
 
 
 db_session = contextmanager(get_db)
 
 # Ensure all models are registered after Base is defined
-print('auth models'); from app.auth import models as auth_models  # noqa
-print('config models'); from app.config import models as config_models  # noqa
-print('chat models'); from app.chat import models as chat_models  # noqa
-print('swarm models'); from app.swarm import models as swarm_models  # noqa
-print('products models'); from app.products import models as product_models  # noqa
-print('reverse engineering models'); from app.reverse_engineering import models as reverse_engineering_models  # noqa
+from app.auth import models as auth_models  # noqa
+from app.chat import models as chat_models  # noqa
+from app.config import models as config_models  # noqa
+from app.products import models as product_models  # noqa
+from app.reverse_engineering import models as reverse_engineering_models  # noqa
+from app.swarm import models as swarm_models  # noqa

@@ -12,20 +12,7 @@ router = APIRouter(prefix="/products", tags=["products"])
 
 @router.get("", response_model=ProductsListResponse)
 async def get_products(db: Session = Depends(get_db)):
-    products = products_service.get_all_products(db)
-    res = []
-    for p in products:
-        res.append(
-            {
-                "id": p.id,
-                "name": p.name,
-                "status": p.status,
-                "url": p.url,
-                "path": p.path,
-                "created_at": p.created_at.strftime("%Y-%m-%d %H:%M"),
-            }
-        )
-    return {"products": res}
+    return {"products": products_service.get_product_summaries(db)}
 
 
 @router.get("/revenue", response_model=RevenueResponse)

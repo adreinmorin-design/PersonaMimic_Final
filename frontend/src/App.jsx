@@ -22,6 +22,8 @@ import { toChatHistory } from './lib/chat';
 import { useDashboardData } from './hooks/useDashboardData';
 import { useVoiceControls } from './hooks/useVoiceControls';
 
+const isPageVisible = () => typeof document === 'undefined' || !document.hidden;
+
 const App = () => {
   const [activeTab, setActiveTab] = useState('chat');
   const [messages, setMessages] = useState([]);
@@ -38,10 +40,14 @@ const App = () => {
   const [intelligence, setIntelligence] = useState({ tier: 1, capabilities: [], assessment: 'Initializing...' });
   const [showTerminal, setShowTerminal] = useState(false);
   const [vaultDraft, setVaultDraft] = useState({ key: '', value: '' });
+  const [uiNotice, setUiNotice] = useState('');
   const chatEndRef = useRef(null);
 
   useEffect(() => {
     const fetchIntel = async () => {
+      if (!isPageVisible()) {
+        return;
+      }
       try {
         const res = await api.get('/system/intelligence');
         setIntelligence(res.data);
@@ -52,7 +58,16 @@ const App = () => {
     if (isConfigured) {
       fetchIntel();
       const interval = setInterval(fetchIntel, 10000);
-      return () => clearInterval(interval);
+      const handleVisibilityChange = () => {
+        if (!document.hidden) {
+          fetchIntel();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => {
+        clearInterval(interval);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     }
   }, [isConfigured]);
 
@@ -147,13 +162,47 @@ const App = () => {
     }
   };
 
+  const handleDeployBrain = async () => {
+    try {
+      await spawnBrain(name);
+      setUiNotice(`Node ${name} deployed.`);
+    } catch {
+      setUiNotice(`Unable to deploy ${name}.`);
+    }
+  };
+
+  const handleVaultSave = async () => {
+    const key = vaultDraft.key.trim();
+    const value = vaultDraft.value;
+    if (!key || !value) {
+      setUiNotice('Vault entry needs both key and value.');
+      return;
+    }
+
+    try {
+      await saveVaultEntry({ key, value, encrypt: true });
+      setVaultDraft({ key: '', value: '' });
+      setUiNotice(`Vault entry ${key} saved.`);
+    } catch {
+      setUiNotice(`Unable to save vault entry ${key}.`);
+    }
+  };
+
+  useEffect(() => {
+    if (!uiNotice) {
+      return undefined;
+    }
+    const timeoutId = window.setTimeout(() => setUiNotice(''), 3000);
+    return () => window.clearTimeout(timeoutId);
+  }, [uiNotice]);
+
   const currentTabContent = () => {
     switch(activeTab) {
       case 'chat': return <ChatPanel isRecording={isRecording} messages={messages} loading={loading} input={input} onInputChange={setInput} onSendMessage={sendMessage} onToggleAutonomousChat={toggleAutonomousChat} chatEndRef={chatEndRef} />;
-      case 'forge': return <AutonomyPanel autonomyLog={autonomyLog} swarmStatus={swarmStatus} onDeployBrain={() => {}} onSpawnBrain={spawnBrain} onStopBrain={stopBrain} />;
+      case 'forge': return <AutonomyPanel autonomyLog={autonomyLog} swarmStatus={swarmStatus} onDeployBrain={handleDeployBrain} onSpawnBrain={spawnBrain} onStopBrain={stopBrain} />;
       case 'audit': return <AuditPanel />;
       case 'inventory': return <WorkspacePanel products={products} onRefreshProducts={refreshProducts} />;
-      case 'vault': return <VaultPanel vaultSettings={vaultSettings} vaultDraft={vaultDraft} onVaultDraftChange={setVaultDraft} onVaultSave={() => {}} />;
+      case 'vault': return <VaultPanel vaultSettings={vaultSettings} vaultDraft={vaultDraft} onVaultDraftChange={setVaultDraft} onVaultSave={handleVaultSave} />;
       default: return null;
     }
   };
@@ -251,6 +300,11 @@ const App = () => {
               onCloudToggle={toggleCloud}
               intelligence={intelligence}
             />
+            {uiNotice && (
+              <div className="px-8 py-2 border-b border-white/5 text-[10px] font-mono uppercase tracking-wider text-cyan-300 bg-cyan-500/5">
+                {uiNotice}
+              </div>
+            )}
             <div className="flex-1 overflow-hidden">
               {currentTabContent()}
             </div>

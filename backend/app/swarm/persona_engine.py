@@ -99,6 +99,17 @@ class ResponseParser:
 
 
 class PersonaEngine:
+    _settings_cache: dict[str, tuple[float, str | None]] = {}
+    _runtime_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+    _model_list_cache: dict[str, tuple[float, list[str]]] = {}
+    _vllm_probe_cache: dict[str, tuple[float, bool]] = {}
+    _custom_tools_cache: tuple[float, list[dict[str, Any]]] = (0.0, [])
+    _SETTINGS_CACHE_TTL_SECONDS = 10.0
+    _RUNTIME_CACHE_TTL_SECONDS = 15.0
+    _MODEL_LIST_CACHE_TTL_SECONDS = 30.0
+    _VLLM_PROBE_CACHE_TTL_SECONDS = 20.0
+    _CUSTOM_TOOLS_CACHE_TTL_SECONDS = 10.0
+
     def __init__(self, model: str | None = None):
         self.examples: list[dict[str, str]] = []
         self.custom_tools: list[dict[str, Any]] = []
@@ -128,18 +139,30 @@ class PersonaEngine:
                 f"PersonaEngine [Local Mode] Initialized: {self.model} @ {self.host} (is_cloud=False)"
             )
 
+    @classmethod
+    def clear_caches(cls):
+        cls._settings_cache.clear()
+        cls._runtime_cache.clear()
+        cls._model_list_cache.clear()
+        cls._vllm_probe_cache.clear()
+        cls._custom_tools_cache = (0.0, [])
+
     @staticmethod
     def _read_setting(key: str) -> str | None:
         """Secure setting read with direct SQLite fallback to avoid SQLAlchemy registry recursion."""
+        now = time.monotonic()
+        cached = PersonaEngine._settings_cache.get(key)
+        if cached and cached[0] > now:
+            return cached[1]
+
+        value: str | None = None
         try:
-            # Try high-level first
             db = SessionLocal()
             try:
-                return config_service.get_setting(db, key)
+                value = config_service.get_setting(db, key)
             finally:
                 db.close()
         except Exception:
-            # Direct SQLite fallback (Industrial standard for bootstrap settings)
             try:
                 import sqlite3
 
@@ -150,27 +173,47 @@ class PersonaEngine:
                 cursor.execute("SELECT value FROM system_settings WHERE key = ?", (key,))
                 row = cursor.fetchone()
                 conn.close()
-                return row[0] if row else None
+                value = row[0] if row else None
             except Exception as exc:
                 logger.debug("Bootstrap setting read failed for '%s': %s", key, exc)
-                return None
+                value = None
+
+        PersonaEngine._settings_cache[key] = (
+            now + PersonaEngine._SETTINGS_CACHE_TTL_SECONDS,
+            value,
+        )
+        return value
 
     def _load_custom_tools(self):
         """Loads industrial tools reverse-engineered by the swarm."""
+        now = time.monotonic()
+        cache_expires_at, cached_tools = self._custom_tools_cache
+        if cache_expires_at > now:
+            self.custom_tools = [tool.copy() for tool in cached_tools]
+            return
+
+        loaded_tools: list[dict[str, Any]] = []
         try:
             if os.path.exists(CUSTOM_TOOL_REGISTRY):
                 with open(CUSTOM_TOOL_REGISTRY, encoding="utf-8") as f:
                     registry = json.load(f)
                     for entry in registry:
-                        tool_def = {
+                        loaded_tools.append(
+                            {
                             "name": entry["name"],
                             "description": entry.get("purpose", "Autonomous forensic tool."),
                             "parameters": entry.get("schema", {"type": "object", "properties": {}}),
-                        }
-                        self.custom_tools.append(tool_def)
-                logger.info(f"Neural Interface: Loaded {len(self.custom_tools)} custom tools.")
+                            }
+                        )
+                logger.info("Neural Interface: Loaded %s custom tools.", len(loaded_tools))
         except Exception as e:
-            logger.warning(f"Failed to load custom tools: {e}")
+            logger.warning("Failed to load custom tools: %s", e)
+
+        self.custom_tools = [tool.copy() for tool in loaded_tools]
+        type(self)._custom_tools_cache = (
+            now + self._CUSTOM_TOOLS_CACHE_TTL_SECONDS,
+            [tool.copy() for tool in loaded_tools],
+        )
 
     def _resolve_runtime(self, model_override: str | None) -> dict[str, Any]:
         """Priority: Override > DB Setting > Env > Fallback."""
@@ -186,6 +229,11 @@ class PersonaEngine:
             or os.getenv("CURRENT_MODEL")
             or MODEL_FALLBACK
         )
+        cloud_url = (
+            self._read_setting("OLLAMA_CLOUD_URL") or os.getenv("OLLAMA_CLOUD_URL") or ""
+        ).strip()
+        vllm_host = os.getenv("VLLM_URL", "http://localhost:8000")
+        local_host = self._normalize_local_host(os.getenv("OLLAMA_HOST") or LOCAL_OLLAMA_HOST)
 
         # Normalize local model - Allow 32B Coder and other high-performance local models
         if (
@@ -195,20 +243,44 @@ class PersonaEngine:
         ):
             configured_model = "qwen2.5-coder:7b"
 
+        runtime_cache_key = json.dumps(
+            {
+                "model_override": model_override or "",
+                "db_use_cloud": db_use_cloud,
+                "env_use_cloud": env_use_cloud,
+                "configured_model": configured_model,
+                "cloud_url": cloud_url,
+                "vllm_host": vllm_host,
+                "local_host": local_host,
+            },
+            sort_keys=True,
+        )
+        now = time.monotonic()
+        cached_runtime = self._runtime_cache.get(runtime_cache_key)
+        if cached_runtime and cached_runtime[0] > now:
+            return dict(cached_runtime[1])
+
         # 1. Try vLLM (High-Speed Inference)
-        vllm_host = os.getenv("VLLM_URL", "http://localhost:8000")
-        if vllm_data := self._probe_vllm(vllm_host, configured_model):
-            return vllm_data
+        if self._probe_vllm(vllm_host):
+            runtime = {
+                "model": configured_model,
+                "host": vllm_host,
+                "key": "vllm_token",
+                "is_cloud": False,
+                "is_vllm": True,
+            }
+            self._runtime_cache[runtime_cache_key] = (
+                now + self._RUNTIME_CACHE_TTL_SECONDS,
+                dict(runtime),
+            )
+            return runtime
 
         # 2. Try Cloud
-        cloud_url = (
-            self._read_setting("OLLAMA_CLOUD_URL") or os.getenv("OLLAMA_CLOUD_URL") or ""
-        ).strip()
         if is_cloud_forced and cloud_url:
             # ONLY try cloud if the model is in our allowlist or explicitly contains cloud-related names
             is_cloud_model = any(m in str(configured_model).lower() for m in CLOUD_ALLOWLIST)
             if is_cloud_model:
-                return {
+                runtime = {
                     "model": configured_model,
                     "host": cloud_url,
                     "key": (
@@ -217,40 +289,54 @@ class PersonaEngine:
                     "is_cloud": True,
                     "is_vllm": False,
                 }
+                self._runtime_cache[runtime_cache_key] = (
+                    now + self._RUNTIME_CACHE_TTL_SECONDS,
+                    dict(runtime),
+                )
+                return runtime
             else:
                 logger.info(
                     f"Engine: Skipping cloud for local-optimized model '{configured_model}'"
                 )
 
         # 3. Fallback to Local
-        return {
+        runtime = {
             "model": configured_model,
-            "host": self._normalize_local_host(
-                os.getenv("OLLAMA_HOST") or "http://localhost:11434"
-            ),
+            "host": local_host,
             "key": "",
             "is_cloud": False,
             "is_vllm": False,
         }
+        self._runtime_cache[runtime_cache_key] = (
+            now + self._RUNTIME_CACHE_TTL_SECONDS,
+            dict(runtime),
+        )
+        return runtime
 
     @staticmethod
-    def _probe_vllm(host: str, model: str) -> dict | None:
+    def _probe_vllm(host: str) -> bool:
+        normalized_host = host.rstrip("/")
+        now = time.monotonic()
+        cached = PersonaEngine._vllm_probe_cache.get(normalized_host)
+        if cached and cached[0] > now:
+            return cached[1]
+
+        is_available = False
         try:
             import requests
 
-            res = requests.get(f"{host.rstrip('/')}/v1/models", timeout=1)
+            res = requests.get(f"{normalized_host}/v1/models", timeout=1)
             if res.status_code == 200:
-                logger.info(f"vLLM Detected (ROCm Ready): {host}")
-                return {
-                    "model": model,
-                    "host": host,
-                    "key": "vllm_token",
-                    "is_cloud": False,
-                    "is_vllm": True,
-                }
+                logger.info("vLLM Detected (ROCm Ready): %s", normalized_host)
+                is_available = True
         except Exception:
-            pass
-        return None
+            is_available = False
+
+        PersonaEngine._vllm_probe_cache[normalized_host] = (
+            now + PersonaEngine._VLLM_PROBE_CACHE_TTL_SECONDS,
+            is_available,
+        )
+        return is_available
 
     @staticmethod
     def _normalize_local_host(host: str) -> str:
@@ -274,6 +360,12 @@ class PersonaEngine:
         return ordered
 
     async def list_available_models(self) -> list[str]:
+        cache_key = f"{self.host}|{self.model}|{self.is_cloud}"
+        now = time.monotonic()
+        cached = self._model_list_cache.get(cache_key)
+        if cached and cached[0] > now:
+            return list(cached[1])
+
         discovered: list[str] = []
 
         if self.is_cloud:
@@ -304,7 +396,12 @@ class PersonaEngine:
             ]
         )
         models = self._dedupe_models(discovered)
-        return models or ["No models detected"]
+        final_models = models or ["No models detected"]
+        self._model_list_cache[cache_key] = (
+            now + self._MODEL_LIST_CACHE_TTL_SECONDS,
+            list(final_models),
+        )
+        return final_models
 
     def _cloud_candidate_models(self) -> list[str]:
         # Prioritize 8b-instant for fallbacks as it has significantly higher rate limits than 70b or Mixtral

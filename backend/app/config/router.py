@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 from fastapi import APIRouter, Depends
@@ -6,15 +7,20 @@ from sqlalchemy.orm import Session
 from app.config.schemas import CloudUpdate, ModelUpdate, SystemHealth, VaultEntry
 from app.config.service import config_service
 from app.database.database import get_db
-from app.swarm.persona_engine import PersonaEngine
+from app.swarm.persona_engine import MODEL_FALLBACK, PersonaEngine
 
 router = APIRouter(prefix="/config", tags=["config"])
 
 
 @router.get("/health", response_model=SystemHealth)
 async def health(db: Session = Depends(get_db)):
-    engine = PersonaEngine(config_service.get_setting(db, "model"))
-    return {"status": "ok", "model": engine.model, "cloud": engine.is_cloud}
+    model = config_service.get_setting(db, "model") or os.getenv("CURRENT_MODEL") or MODEL_FALLBACK
+    db_use_cloud = config_service.get_setting(db, "use_cloud")
+    env_use_cloud = os.getenv("USE_CLOUD", "false").strip().lower() == "true"
+    use_cloud = (
+        str(db_use_cloud).strip().lower() == "true" if db_use_cloud is not None else False
+    ) or env_use_cloud
+    return {"status": "ok", "model": model, "cloud": use_cloud}
 
 
 @router.get("/models")
@@ -36,12 +42,14 @@ async def update_config(update: ModelUpdate, db: Session = Depends(get_db)):
     else:
         config_service.update_setting(db, "persona_type", "mimic")
 
+    PersonaEngine.clear_caches()
     return {"status": "success", "model": update.model}
 
 
 @router.post("/cloud", response_model=dict[str, Any])
 async def update_cloud_config(update: CloudUpdate, db: Session = Depends(get_db)):
     config_service.update_setting(db, "use_cloud", str(update.use_cloud))
+    PersonaEngine.clear_caches()
     return {"status": "success", "use_cloud": update.use_cloud}
 
 
