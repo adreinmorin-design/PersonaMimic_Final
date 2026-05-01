@@ -34,9 +34,9 @@ async def swarm_stop(name: str):
 async def autonomy_status():
     # Legacy support for main Dre brain
     if "Dre" not in swarm_manager.brains:
-        return {"running": False, "tasks_completed": 0, "log": []}
+        return {"running": False, "tasks_completed": 0, "log": [], "directive": getattr(swarm_manager, 'global_directive', None)}
     dre = swarm_manager.brains["Dre"]
-    return {"running": dre.running, "tasks_completed": dre.task_count, "log": dre.log[-30:]}
+    return {"running": dre.running, "tasks_completed": dre.task_count, "log": dre.log[-30:], "directive": getattr(swarm_manager, 'global_directive', None)}
 
 
 @router.post("/adversary/review")

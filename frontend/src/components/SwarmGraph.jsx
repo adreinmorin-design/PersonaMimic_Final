@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
-import { motion } from 'framer-motion';
 
 const SwarmGraph = ({ swarmStatus }) => {
   const svgRef = useRef();
@@ -61,18 +60,7 @@ const SwarmGraph = ({ swarmStatus }) => {
     feMerge.append("feMergeNode").attr("in", "blur");
     feMerge.append("feMergeNode").attr("in", "SourceGraphic");
 
-    // --- BACKGROUND MAGNETIC WAVES ---
-    const waveGroup = svg.append("g").attr("class", "magnetic-waves").attr("opacity", 0.1);
-    for (let i = 0; i < 3; i++) {
-        waveGroup.append("circle")
-            .attr("cx", width / 2)
-            .attr("cy", height / 2)
-            .attr("r", 50 + (i * 80))
-            .attr("fill", "none")
-            .attr("stroke", "var(--accent-primary)")
-            .attr("stroke-width", "1")
-            .attr("class", `wave-circle wave-${i}`);
-    }
+    // Wave group removed for stability
 
     const simulation = d3.forceSimulation(nodes)
       .force("link", d3.forceLink(links).id(d => d.id).distance(130))
@@ -130,7 +118,7 @@ const SwarmGraph = ({ swarmStatus }) => {
       .attr("r", d => 10 + Math.min(d.tasks, 15))
       .attr("fill", d => d.group === 1 ? "var(--accent-primary)" : "#ef4444")
       .style("filter", "url(#nodeGlow)")
-      .attr("class", d => d.group === 1 ? "node-core animate-pulse" : "node-core");
+      .attr("class", "node-core");
 
     node.append("text")
       .text(d => d.id.toUpperCase())
@@ -163,7 +151,7 @@ const SwarmGraph = ({ swarmStatus }) => {
           <div className="flex gap-6 items-center">
             <span className="text-[8px] font-black uppercase opacity-20 tracking-widest">Global Synaptic Load</span>
             <div className="w-32 h-1 bg-white/5 rounded-full overflow-hidden">
-               <motion.div initial={{ width: 0 }} animate={{ width: '78%' }} className="h-full bg-gradient-to-r from-blue-600 to-blue-400" />
+               <div style={{ width: '78%' }} className="h-full bg-gradient-to-r from-blue-600 to-blue-400" />
             </div>
           </div>
        </div>
@@ -179,24 +167,6 @@ const SwarmGraph = ({ swarmStatus }) => {
              linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
              linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
            background-size: 40px 40px;
-         }
-         .wave-circle {
-            transform-origin: center;
-            animation: wave-expand 8s ease-out infinite;
-         }
-         .wave-1 { animation-delay: -2s; }
-         .wave-2 { animation-delay: -4s; }
-         @keyframes wave-expand {
-            0% { transform: scale(0.8); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
-         }
-         .node-outer-ring {
-            animation: rotate-ring 20s linear infinite;
-         }
-         @keyframes rotate-ring {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
          }
        `}</style>
     </div>

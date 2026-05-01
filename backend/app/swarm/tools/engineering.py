@@ -292,6 +292,8 @@ async def assemble_full_product(
             "- Design an Industrial-Scale system with decoupled logic.\n"
             "- Include at least one main entry point (.py), multiple core modules, a dedicated telemetry/logging module, and a README.md.\n"
             "- Include .env.example, requirements.txt, and a build/start script (.bat or .sh).\n"
+            "- MUST include WALKTHROUGH.md detailing exactly how to use the product.\n"
+            "- MUST include setup_wizard.py (interactive CLI) that explains what it is doing and what it needs to function.\n"
             "- Return ONLY a comma-separated list of filenames. No preamble."
         )
         res = await engine.generate_response(manifest_prompt, persona_type="coding")
@@ -304,6 +306,10 @@ async def assemble_full_product(
             filenames.append("main.py")
         if "README.md" not in filenames:
             filenames.append("README.md")
+        if "WALKTHROUGH.md" not in filenames:
+            filenames.append("WALKTHROUGH.md")
+        if "setup_wizard.py" not in filenames:
+            filenames.append("setup_wizard.py")
 
         log.append(f"[OK] Manifest locked: {', '.join(filenames)}")
 

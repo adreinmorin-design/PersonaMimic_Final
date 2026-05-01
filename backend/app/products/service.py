@@ -5,6 +5,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.products.models import Product
+from app.reverse_engineering.models import SynthesisJob
 
 logger = logging.getLogger("products_service")
 
@@ -28,7 +29,8 @@ class ProductsService:
             .order_by(Product.created_at.desc())
             .all()
         )
-        return [
+        
+        result = [
             {
                 "id": product_id,
                 "name": name,
@@ -39,6 +41,22 @@ class ProductsService:
             }
             for product_id, name, status, url, path, created_at in rows
         ]
+        
+        # Merge reverse engineered tools
+        tools = db.query(SynthesisJob).all()
+        for t in tools:
+            if t.status == 'completed':
+                result.append({
+                    "id": f"tool_{t.id}",
+                    "name": f"Tool: {t.target}",
+                    "status": "published",
+                    "url": None,
+                    "path": None,
+                    "created_at": t.timestamp.strftime("%Y-%m-%d %H:%M") if t.timestamp else "",
+                })
+        
+        result.sort(key=lambda x: x["created_at"] or "", reverse=True)
+        return result
 
     @staticmethod
     def get_product_by_name(db: Session, name: str) -> Product | None:

@@ -1,5 +1,4 @@
 import { Loader2, Mic, Play, Send } from 'lucide-react';
-import { motion } from 'framer-motion';
 import ThoughtProcess from '../ThoughtProcess';
 import { parseMessage } from '../../lib/chat';
 
@@ -30,10 +29,8 @@ const ChatPanel = ({
       {messages.map((message, index) => {
         const { text, thought } = parseMessage(message.content);
         return (
-          <motion.div
+          <div
             key={index}
-            initial={{ opacity: 0, x: message.role === 'user' ? 20 : -20 }}
-            animate={{ opacity: 1, x: 0 }}
             className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}
           >
             <div className={`chat-bubble ${message.role === 'user' ? 'user-bubble' : 'bot-bubble'}`}>
@@ -52,7 +49,7 @@ const ChatPanel = ({
               <p className="whitespace-pre-wrap text-sm">{text}</p>
               {thought && <ThoughtProcess content={thought} />}
             </div>
-          </motion.div>
+          </div>
         );
       })}
       {loading && (

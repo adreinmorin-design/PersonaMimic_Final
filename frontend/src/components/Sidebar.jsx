@@ -36,7 +36,7 @@ const Sidebar = ({ autonomyLog = [], swarmStatus = {} }) => {
   ];
 
   return (
-    <div className="absolute top-24 right-8 w-64 pointer-events-none z-20 space-y-4">
+    <div className="w-64 flex flex-col gap-4 z-20 pointer-events-auto">
       {/* Neural Production Line */}
       <div className="glass-panel p-4 border-blue-500/10 bg-blue-500/[0.02]">
         <div className="flex justify-between items-center mb-3">
@@ -53,9 +53,8 @@ const Sidebar = ({ autonomyLog = [], swarmStatus = {} }) => {
                 </span>
               </div>
               <div className="w-full h-0.5 bg-white/5 rounded-full overflow-hidden">
-                <motion.div 
-                  initial={false}
-                  animate={{ width: `${item.level}%` }} 
+                <div 
+                  style={{ width: `${item.level}%`, transition: 'width 0.3s ease-in-out' }} 
                   className={`h-full ${item.status === 'Done' ? 'bg-green-500/50' : 'bg-blue-500'}`}
                 />
               </div>

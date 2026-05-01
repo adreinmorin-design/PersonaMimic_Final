@@ -7,6 +7,7 @@ const isPageVisible = () => typeof document === 'undefined' || !document.hidden;
 
 export function useDashboardData({ activeTab, showSentinel }) {
   const [autonomyLog, setAutonomyLog] = useState([]);
+  const [globalDirective, setGlobalDirective] = useState('');
   const [swarmStatus, setSwarmStatus] = useState({});
   const [vaultSettings, setVaultSettings] = useState([]);
   const [products, setProducts] = useState([]);
@@ -26,6 +27,7 @@ export function useDashboardData({ activeTab, showSentinel }) {
       api.get('/swarm/status'),
     ]);
     setAutonomyLog(autonomyResponse.data.log || []);
+    setGlobalDirective(autonomyResponse.data.directive || '');
     setSwarmStatus(swarmResponse.data || {});
   };
 
@@ -186,6 +188,7 @@ export function useDashboardData({ activeTab, showSentinel }) {
     selectedModel,
     useCloud,
     revenue,
+    globalDirective,
     refreshProducts,
     refreshVault,
     saveVaultEntry,
