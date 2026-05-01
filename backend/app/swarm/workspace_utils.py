@@ -115,7 +115,7 @@ def infer_product_files(product_name: str, files: list[str] | None = None) -> li
     if not inferred:
         return None
 
-    support_paths = ("README.md", "LICENSE", "requirements.txt", "MARKETING.md", "assets")
+    support_paths = ("README.md", "LICENSE", "requirements.txt", "MARKETING.md", "WALKTHROUGH.md", "assets")
     support_candidates = []
     if product_roots:
         primary_root = product_roots[0]

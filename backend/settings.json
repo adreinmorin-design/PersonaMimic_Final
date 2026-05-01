@@ -10,7 +10,9 @@
     "python.analysis.exclude": [
         "**/__pycache__",
         "**/.venv",
-        "**/node_modules"
+        "**/node_modules",
+        "**/node_modules",
+        "**/.*"
     ],
     "python.defaultInterpreterPath": "./.venv/Scripts/python.exe"
 }

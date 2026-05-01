@@ -16,7 +16,7 @@ from .engineering import (
 from .discovery import market_research, market_analyzer, discover_new_niche, add_to_global_niches, affiliate_researcher
 from .commerce import package_product, list_products, ecommerce_publisher, revenue_auditor, EcommerceArgs
 from .quality import validate_product, peer_review, objective_validator
-from .marketing import generate_marketing_copy, generate_whop_app, generate_app_visuals, social_publisher
+from .marketing import generate_marketing_copy, generate_whop_app, generate_app_visuals, generate_product_walkthrough, social_publisher
 from .meta import create_custom_tool, spawn_sub_brain
 
 from ..compliance_service import compliance_service
@@ -31,8 +31,9 @@ def generate_compliance_bundle(product_name: str, niche: str, specs: str = ""):
 MUTATING_TOOLS = {
     "file_manager", "package_product", "create_custom_tool", "spawn_sub_brain",
     "social_publisher", "generate_marketing_copy", "generate_whop_app",
-    "generate_app_visuals", "assemble_full_product", "ecommerce_publisher",
-    "python_executor", "shell_executor", "saas_architect", "generate_compliance_bundle"
+    "generate_app_visuals", "generate_product_walkthrough", "assemble_full_product",
+    "ecommerce_publisher", "python_executor", "shell_executor", "saas_architect",
+    "generate_compliance_bundle"
 }
 
 CACHEABLE_TOOLS = {"web_search", "web_fetch", "market_research"}
@@ -52,6 +53,7 @@ TOOLS = [
     {"name": "assemble_full_product", "description": "Build asset.", "parameters": {"type": "object", "properties": {"product_name": {"type": "string"}, "product_type": {"type": "string"}}, "required": ["product_name", "product_type"]}},
     {"name": "discover_new_niche", "description": "Scan niches.", "parameters": {"type": "object", "properties": {"depth": {"type": "integer"}}}},
     {"name": "generate_compliance_bundle", "description": "Generate Legal & FAQ.", "parameters": ComplianceArgs.model_json_schema()},
+    {"name": "generate_product_walkthrough", "description": "Generate product walkthrough/proof.", "parameters": {"type": "object", "properties": {"product_name": {"type": "string"}, "niche": {"type": "string"}}, "required": ["product_name"]}},
     # ... other tools
 ]
 
@@ -76,7 +78,8 @@ TOOL_HANDLERS = {
     "generate_marketing_copy": lambda a: generate_marketing_copy(a.get("product_name"), a.get("niche")),
     "generate_whop_app": lambda a: generate_whop_app(a.get("product_name"), a.get("niche")),
     "generate_app_visuals": lambda a: generate_app_visuals(a.get("product_name"), a.get("description")),
-    "ecommerce_publisher": lambda a: ecommerce_publisher(a.get("platform"), a.get("api_key"), a.get("title"), a.get("description"), a.get("price"), a.get("currency"), a.get("company_id")),
+    "generate_product_walkthrough": lambda a: generate_product_walkthrough(a.get("product_name"), a.get("niche")),
+    "ecommerce_publisher": lambda a: ecommerce_publisher(a.get("platform"), a.get("api_key"), a.get("title"), a.get("description"), a.get("price"), a.get("currency"), a.get("company_id"), a.get("product_name")),
     "discover_new_niche": lambda a: discover_new_niche(a.get("depth", 5)),
     "add_to_global_niches": lambda a: add_to_global_niches(a.get("niche")),
     "maps_search": lambda a: maps_search(a.get("location_query")),
