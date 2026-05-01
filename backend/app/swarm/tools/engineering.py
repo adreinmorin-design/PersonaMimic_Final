@@ -347,8 +347,9 @@ async def assemble_full_product(
             else:
                 log.append(f"[OK] {filename} generated.")
 
-        # Execute generation for all files concurrently
-        await asyncio.gather(*[_generate_and_validate(f) for f in filenames])
+        # Execute generation for all files sequentially to prevent overloading the machine
+        for f in filenames:
+            await _generate_and_validate(f)
 
         log.append(f"=== {product_name} ASSEMBLY COMPLETE ===")
         return "\n".join(log)
