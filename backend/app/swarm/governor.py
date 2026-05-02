@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import logging
 import random
@@ -19,9 +20,9 @@ class SwarmGovernor:
     """
 
     @staticmethod
-    def get_quota(db: Session, brain_name: str) -> UsageQuota:
+    async def get_quota(db: Session, brain_name: str) -> UsageQuota:
         today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
-        quota = swarm_repo.get_quota(db, brain_name, today)
+        quota = await swarm_repo.get_quota(db, brain_name, today)
         if not quota:
             quota = UsageQuota(
                 brain_name=brain_name, day=today, tokens_consumed=0, tasks_completed=0
@@ -32,9 +33,9 @@ class SwarmGovernor:
         return quota
 
     @staticmethod
-    def check_token_limit(db: Session, brain_name: str) -> bool:
-        quota = SwarmGovernor.get_quota(db, brain_name)
-        limit_str = config_service.get_setting(db, "daily_token_quota")
+    async def check_token_limit(db: Session, brain_name: str) -> bool:
+        quota = await SwarmGovernor.get_quota(db, brain_name)
+        limit_str = await asyncio.to_thread(config_service.get_setting, db, "daily_token_quota")
         limit = int(limit_str) if limit_str else 1000000
 
         if quota.tokens_consumed >= limit:
@@ -53,9 +54,9 @@ class SwarmGovernor:
         return "market_discovery"
 
     @staticmethod
-    def get_synthesis_target(db: Session) -> str:
+    async def get_synthesis_target(db: Session) -> str:
         """Returns a random reverse-engineering target from the catalog."""
-        targets = reverse_engineering_repo.list_targets(db)
+        targets = await reverse_engineering_repo.list_targets(db)
         if targets:
             return random.choice(targets).target_id
 
@@ -74,10 +75,10 @@ class SwarmGovernor:
         )
 
     @staticmethod
-    def track_usage(db: Session, brain_name: str, tokens: int = 0):
+    async def track_usage(db: Session, brain_name: str, tokens: int = 0):
         """Updates the brain's daily quota usage."""
         today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
-        swarm_repo.track_usage(db, brain_name, today, tokens)
+        await swarm_repo.track_usage(db, brain_name, today, tokens)
 
 
 swarm_governor = SwarmGovernor()

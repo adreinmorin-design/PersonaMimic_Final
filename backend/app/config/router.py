@@ -21,7 +21,7 @@ async def health(db: Session = Depends(get_db)):
 async def get_models():
     engine = PersonaEngine()
     try:
-        available_models = engine.list_available_models()
+        available_models = await engine.list_available_models()
         return {"models": available_models}
     except Exception as e:
         return {"models": [f"Engine Offline: {str(e)[:50]}"]}

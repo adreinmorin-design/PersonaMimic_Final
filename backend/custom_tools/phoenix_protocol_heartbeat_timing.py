@@ -1,0 +1,1 @@
+/* Quality Gate Rejection: Hybrid score 0.51 failed to meet studio threshold. */

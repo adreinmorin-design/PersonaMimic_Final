@@ -257,22 +257,33 @@ class ReverseEngineeringService:
         ) or cls._contains_placeholder_patterns(payload["raw_content"]):
             payload["status"] = "flagged"
 
-    def create_custom_target(
+    async def create_custom_target(
         self, db: Session, target_request: AgentTargetCreateRequest
     ) -> AgentTarget:
-        return reverse_engineering_repo.create_custom_target(db, target_request)
+        return await reverse_engineering_repo.create_custom_target(db, target_request)
 
-    def list_targets(self, db: Session) -> list[AgentTarget]:
-        return reverse_engineering_repo.list_targets(db)
+    async def list_targets(self, db: Session) -> list[AgentTarget]:
+        return await reverse_engineering_repo.list_targets(db)
 
     @classmethod
     def resolve_default_cluster(cls, target_id: str) -> str:
         return cls.TARGET_CLUSTER_MAP.get((target_id or "").strip().lower(), "c_104")
 
-    def trigger_synthesis(self, db: Session, req: SynthesisRequest):
-        resolved_target = reverse_engineering_repo.resolve_target(db, req.target)
+    async def trigger_synthesis(self, db: Session, req: SynthesisRequest):
+        resolved_target = await reverse_engineering_repo.resolve_target(db, req.target)
         if not resolved_target:
             logger.error("Unsupported synthesis target: %s", req.target)
+            return None
+
+        # --- DEDUPLICATION CHECK ---
+        existing_tools = await reverse_engineering_repo.list_replicated_tools(
+            db, target_id=resolved_target.target_id, status="completed"
+        )
+        if existing_tools:
+            logger.info(
+                "[RE-DEDUPE] Tool for target '%s' already exists. Skipping trigger.",
+                resolved_target.target_id,
+            )
             return None
 
         normalized_req = SynthesisRequest(
@@ -281,7 +292,7 @@ class ReverseEngineeringService:
             context=req.context,
             purpose=req.purpose,
         )
-        job = reverse_engineering_repo.create_job(db, normalized_req)
+        job = await reverse_engineering_repo.create_job(db, normalized_req)
 
         try:
             task = asyncio.create_task(
@@ -296,7 +307,7 @@ class ReverseEngineeringService:
             task.add_done_callback(self._log_background_result)
         except RuntimeError:
             logger.exception("No running event loop; unable to schedule reverse engineering job.")
-            reverse_engineering_repo.update_job_status(db, job.id, "failed")
+            await reverse_engineering_repo.update_job_status(db, job.id, "failed")
 
         return job
 
@@ -305,7 +316,7 @@ class ReverseEngineeringService:
         Runs reverse engineering asynchronously within an existing event loop.
         """
         with db_session() as db:
-            resolved_target = reverse_engineering_repo.resolve_target(db, req.target)
+            resolved_target = await reverse_engineering_repo.resolve_target(db, req.target)
             if not resolved_target:
                 return False, f"Unsupported synthesis target: {req.target}", None
 
@@ -314,13 +325,25 @@ class ReverseEngineeringService:
             source_repo_url = resolved_target.source_repo_url
 
             cluster_id = req.cluster_id.strip() or self.resolve_default_cluster(target_id)
+
+            # --- DEDUPLICATION CHECK ---
+            existing_tools = await reverse_engineering_repo.list_replicated_tools(
+                db, target_id=target_id, status="completed"
+            )
+            if existing_tools:
+                logger.info(
+                    "[RE-DEDUPE] Tool for target '%s' already exists. Skipping synthesis.",
+                    target_id,
+                )
+                return True, "completed", None
+
             normalized_req = SynthesisRequest(
                 target=target_id,
                 cluster_id=cluster_id,
                 context=req.context,
                 purpose=req.purpose,
             )
-            job = reverse_engineering_repo.create_job(db, normalized_req)
+            job = await reverse_engineering_repo.create_job(db, normalized_req)
 
         try:
             await self._process_job(
@@ -333,11 +356,11 @@ class ReverseEngineeringService:
         except Exception as exc:
             logger.error("Async reverse engineering failed for job %s: %s", job.id, exc)
             with db_session() as db:
-                reverse_engineering_repo.update_job_status(db, job.id, "failed")
+                await reverse_engineering_repo.update_job_status(db, job.id, "failed")
             return False, str(exc), job.id
 
         with db_session() as db:
-            finished = reverse_engineering_repo.get_job(db, job.id)
+            finished = await reverse_engineering_repo.get_job(db, job.id)
             if not finished:
                 return False, "Synthesis job disappeared unexpectedly.", job.id
             success = finished.status == "completed"
@@ -350,14 +373,16 @@ class ReverseEngineeringService:
         try:
             loop = asyncio.get_running_loop()
             if loop.is_running():
-                logger.warning("run_synthesis_inline called from running loop. Logic should be awaited instead.")
+                logger.warning(
+                    "run_synthesis_inline called from running loop. Logic should be awaited instead."
+                )
                 # This is a fallback but shouldn't be relied upon; caller should be async
                 return False, "Called from running loop. Use run_synthesis_async instead.", None
         except RuntimeError:
             pass
 
         with db_session() as db:
-            resolved_target = reverse_engineering_repo.resolve_target(db, req.target)
+            resolved_target = reverse_engineering_repo._resolve_target_sync(db, req.target)
             if not resolved_target:
                 return False, f"Unsupported synthesis target: {req.target}", None
 
@@ -372,7 +397,7 @@ class ReverseEngineeringService:
                 context=req.context,
                 purpose=req.purpose,
             )
-            job = reverse_engineering_repo.create_job(db, normalized_req)
+            job = reverse_engineering_repo._create_job_sync(db, normalized_req)
 
         try:
             asyncio.run(
@@ -387,11 +412,11 @@ class ReverseEngineeringService:
         except Exception as exc:
             logger.error("Inline reverse engineering failed for job %s: %s", job.id, exc)
             with db_session() as db:
-                reverse_engineering_repo.update_job_status(db, job.id, "failed")
+                reverse_engineering_repo._update_job_status_sync(db, job.id, "failed")
             return False, str(exc), job.id
 
         with db_session() as db:
-            finished = reverse_engineering_repo.get_job(db, job.id)
+            finished = reverse_engineering_repo._get_job_sync(job.id, db)
             if not finished:
                 return False, "Synthesis job disappeared unexpectedly.", job.id
             success = finished.status == "completed"
@@ -407,37 +432,37 @@ class ReverseEngineeringService:
     ):
         try:
             logger.info("Starting reverse engineering for %s (Job: %s)", req.target, job_id)
-            self._update_job_status(job_id, "processing")
+            await self._update_job_status(job_id, "processing")
 
             result = await self._synthesize_tool(req, target_id, target_name, source_repo_url)
             runbook = self._build_runbook_payload(result)
 
-            self._finalize_job_record(job_id, target_id, target_name, source_repo_url, runbook)
+            await self._finalize_job_record(
+                job_id, target_id, target_name, source_repo_url, runbook
+            )
 
             logger.info("Finished job %s (status=%s)", job_id, runbook["status"])
         except Exception as exc:
             logger.error("Job %s failed: %s", job_id, exc)
-            self._update_job_status(job_id, "failed")
+            await self._update_job_status(job_id, "failed")
 
-    def _update_job_status(
+    async def _update_job_status(
         self, job_id: int, status: str, code: str | None = None, purpose: str | None = None
     ):
         with db_session() as db:
-            reverse_engineering_repo.update_job_status(db, job_id, status, code, purpose)
+            await reverse_engineering_repo.update_job_status(db, job_id, status, code, purpose)
 
     async def _synthesize_tool(
         self, req: SynthesisRequest, target_id: str, name: str, url: str | None
     ) -> dict:
         context = f"TARGET: {name} ({target_id})\nSOURCE: {url or 'n/a'}\nCONTEXT: {req.context}"
-        return await asyncio.to_thread(
-            synthesis_agent.synthesize_from_cluster, req.cluster_id, context
-        )
+        return await synthesis_agent.synthesize_from_cluster(req.cluster_id, context)
 
-    def _finalize_job_record(
+    async def _finalize_job_record(
         self, job_id: int, target_id: str, name: str, url: str | None, runbook: dict
     ):
         with db_session() as db:
-            reverse_engineering_repo.create_replicated_tool(
+            await reverse_engineering_repo.create_replicated_tool(
                 db,
                 job_id=job_id,
                 target_id=target_id,
@@ -456,7 +481,7 @@ class ReverseEngineeringService:
             )
 
             final_status = "failed" if runbook["status"] == "flagged" else "completed"
-            reverse_engineering_repo.update_job_status(
+            await reverse_engineering_repo.update_job_status(
                 db,
                 job_id,
                 final_status,

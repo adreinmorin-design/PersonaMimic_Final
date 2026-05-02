@@ -8,9 +8,9 @@ router = APIRouter(prefix="/system", tags=["System"])
 
 
 @router.get("/intelligence")
-def get_intelligence(db: Session = Depends(get_db)):
+async def get_intelligence(db: Session = Depends(get_db)):
     """Returns the current intelligence tier and active capabilities."""
-    return system_service.get_intelligence(db)
+    return await system_service.get_intelligence(db)
 
 
 @router.get("/health")

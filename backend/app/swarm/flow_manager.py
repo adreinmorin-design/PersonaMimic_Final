@@ -106,33 +106,83 @@ class SwarmState(TypedDict):
     max_attempts: int
     status: str
     forensic_score: float
+    plan_details: dict
 
 
-def generator_node(state: SwarmState):
-    """Generates the initial product bundle (Step 1)."""
-    def _generate():
-        logger.info(f"[FLOW] Generating {state['product_name']}...")
-        execute_tool(
-            "assemble_full_product",
-            {
-                "product_name": state["product_name"],
-                "niche": state["niche"],
-                "product_type": "SaaS",
-                "specs": state["specs"],
-            },
-        )
-        return {"status": "generated", "attempts": state["attempts"] + 1}
-    
-    return _step_executor.execute_step("generator", _generate, state)
+# --- Nodes ---
+async def planner_node(state: SwarmState):
+    """Refines the mission into detailed specs using the Top-Notch Orchestrator."""
+    logger.info(f"[FLOW] Orchestrator planning mission for {state['niche']}...")
+
+    res_json = await execute_tool(
+        "strategic_planner",
+        {"niche": state["niche"], "current_specs": state["specs"]},
+        brain_name="MasterBrain",
+    )
+
+    import json
+
+    try:
+        data = json.loads(res_json)
+        return {
+            "product_name": data.get("product_name", state["product_name"]),
+            "specs": data.get("refined_specs", state["specs"]),
+            "plan_details": data,
+            "status": "planned",
+        }
+    except Exception:
+        return {"status": "planning_failed"}
 
 
-def adversary_node(state: SwarmState):
+async def generator_node(state: SwarmState):
+    """Generates the initial product bundle."""
+    logger.info(f"[FLOW] Generating {state['product_name']}...")
+    # Leveraging the existing assemble_full_product tool
+    await execute_tool(
+        "assemble_full_product",
+        {
+            "product_name": state["product_name"],
+            "niche": state["niche"],
+            "product_type": "SaaS",
+            "specs": state["specs"],
+        },
+        brain_name="Codesmith",
+    )
+    # Ensure legal/compliance docs are included to boost score
+    await execute_tool(
+        "generate_compliance_bundle",
+        {
+            "product_name": state["product_name"],
+            "niche": state["niche"],
+            "specs": state["specs"],
+        },
+        brain_name="MasterBrain",
+    )
+    return {"status": "generated", "attempts": state["attempts"] + 1}
+
+
+async def adversary_node(state: SwarmState):
     """Strict Quality Gate using Forensic/Static analysis (Step 2)."""
     def _validate():
         logger.info(
             f"[FLOW] Adversary auditing {state['product_name']} (Attempt {state['attempts']})..."
         )
 
+    # 1. Real Quality Gate (Static Scan + LLM Review)
+    report_raw = await execute_tool(
+        "validate_product", {"product_name": state["product_name"]}, brain_name="Fenko"
+    )
+
+    # 2. Check verdict
+    passed = "[OK] PASSED" in report_raw
+
+    # Extract score if possible
+    score = 0.0
+    import re
+
+    match = re.search(r"Score: (\d+)/100", report_raw)
+    if match:
+        score = float(match.group(1))
         report_raw = execute_tool("objective_validator", {"product_name": state["product_name"]})
         passed = "PASSED" in report_raw or "Findings: 0" in report_raw
         score = 100.0 if passed else 0.0
@@ -146,32 +196,34 @@ def adversary_node(state: SwarmState):
     return _step_executor.execute_step("adversary", _validate, state)
 
 
-def healer_node(state: SwarmState):
+async def healer_node(state: SwarmState):
     """Neural Self-Correction guided by Adversary metrics (Step 3)."""
     def _repair():
         logger.info(f"[FLOW] Healer repairing {state['product_name']}...")
 
         repair_directive = f"FIX THESE ERRORS: {state['adversary_report']['raw'][:1000]}"
-        execute_tool(
+        await execute_tool(
             "assemble_full_product",
             {
                 "product_name": state["product_name"],
                 "niche": state["niche"],
-                "specs": f"{state['specs']} | REPAIR_MODE: {repair_directive}",
+                "specs": state["specs"],
+            "feedback": state["adversary_report"].get("raw", "General repair needed."),
             },
-        )
+            brain_name="Dre",
+    )
         return {"status": "repaired"}
     
     return _step_executor.execute_step("healer", _repair, state)
 
 
-def synthesis_node(state: SwarmState):
+async def synthesis_node(state: SwarmState):
     """Forensic synthesis: Forges code from neural clusters (Step 4)."""
     def _synthesize():
         logger.info(f"[FLOW] Executing Forensic Synthesis for {state['product_name']}...")
 
         cluster_id = "c_882" if "phoenix" in state.get("niche", "").lower() else "c_104"
-        synthesis_result = synthesis_agent.synthesize_from_cluster(cluster_id, state["specs"])
+        synthesis_result = await synthesis_agent.synthesize_from_cluster(cluster_id, state["specs"])
         generated_block = synthesis_result.get("code", "")
         purpose = synthesis_result.get("purpose", "Autonomous forensic integration.")
 
@@ -182,8 +234,8 @@ def synthesis_node(state: SwarmState):
                     cluster_id=cluster_id,
                     context=state["specs"],
                 )
-                job = reverse_engineering_repo.create_job(db, req)
-                reverse_engineering_repo.update_job_status(
+                job = await reverse_engineering_repo.create_job(db, req)
+                await reverse_engineering_repo.update_job_status(
                     db, job.id, "completed", generated_block, purpose
                 )
                 logger.info(f"[FLOW] Persisted Synthesis Artifact to Vault: Job #{job.id}")
@@ -212,13 +264,14 @@ def should_continue(state: SwarmState):
 
 def create_swarm_graph():
     workflow = StateGraph(SwarmState)
-
+    workflow.add_node("planner", planner_node)
     workflow.add_node("generator", generator_node)
     workflow.add_node("adversary", adversary_node)
     workflow.add_node("healer", healer_node)
     workflow.add_node("synthesizer", synthesis_node)
 
-    workflow.set_entry_point("generator")
+    workflow.set_entry_point("planner")
+    workflow.add_edge("planner", "generator")
     workflow.add_edge("generator", "adversary")
 
     workflow.add_conditional_edges(

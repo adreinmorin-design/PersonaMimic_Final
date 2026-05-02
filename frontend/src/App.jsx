@@ -14,6 +14,7 @@ import Sidebar from './components/Sidebar';
 import BootSequence from './components/BootSequence';
 import ChatPanel from './components/panels/ChatPanel';
 import AutonomyPanel from './components/panels/AutonomyPanel';
+import AuditPanel from './components/panels/AuditPanel';
 import WorkspacePanel from './components/panels/WorkspacePanel';
 import VaultPanel from './components/panels/VaultPanel';
 import { api, sentinelStorage } from './lib/api';
@@ -149,8 +150,9 @@ const App = () => {
   const currentTabContent = () => {
     switch(activeTab) {
       case 'chat': return <ChatPanel isRecording={isRecording} messages={messages} loading={loading} input={input} onInputChange={setInput} onSendMessage={sendMessage} onToggleAutonomousChat={toggleAutonomousChat} chatEndRef={chatEndRef} />;
-      case 'autonomy': return <AutonomyPanel autonomyLog={autonomyLog} swarmStatus={swarmStatus} onDeployBrain={() => {}} onSpawnBrain={spawnBrain} onStopBrain={stopBrain} />;
-      case 'workspace': return <WorkspacePanel products={products} onRefreshProducts={refreshProducts} />;
+      case 'forge': return <AutonomyPanel autonomyLog={autonomyLog} swarmStatus={swarmStatus} onDeployBrain={() => {}} onSpawnBrain={spawnBrain} onStopBrain={stopBrain} />;
+      case 'audit': return <AuditPanel />;
+      case 'inventory': return <WorkspacePanel products={products} onRefreshProducts={refreshProducts} />;
       case 'vault': return <VaultPanel vaultSettings={vaultSettings} vaultDraft={vaultDraft} onVaultDraftChange={setVaultDraft} onVaultSave={() => {}} />;
       default: return null;
     }
@@ -196,7 +198,7 @@ const App = () => {
         ) : (
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="px-8 py-4 z-10 flex gap-4 border-b border-white/5">
-              {['chat', 'autonomy', 'workspace', 'vault'].map(tab => (
+              {['chat', 'forge', 'audit', 'inventory', 'vault'].map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'text-blue-400 bg-blue-500/10 rounded-lg' : 'opacity-40 hover:opacity-100'}`}>
                   {tab}
                 </button>

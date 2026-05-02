@@ -10,11 +10,11 @@ logger = logging.getLogger("system_service")
 
 
 class SystemIntelligenceService:
-    def get_intelligence(self, db: Session) -> dict:
+    async def get_intelligence(self, db: Session) -> dict:
         """
         Assesses the system's current capabilities based on successful reverse-engineering.
         """
-        completed_jobs = reverse_engineering_repo.list_jobs_by_status(db, "completed")
+        completed_jobs = await reverse_engineering_repo.list_jobs_by_status(db, "completed")
         job_count = len(completed_jobs)
 
         # Unique target IDs

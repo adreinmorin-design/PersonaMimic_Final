@@ -25,9 +25,17 @@ class AuthRepository:
         db.refresh(role)
         return role
 
-    def create_user(self, db: Session, username: str, role_id: int) -> User:
-        user = User(username=username, role_id=role_id)
+    def create_user(
+        self, db: Session, username: str, role_id: int, hashed_password: str | None = None
+    ) -> User:
+        user = User(username=username, role_id=role_id, hashed_password=hashed_password)
         db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
+
+    def update_user_password(self, db: Session, user: User, hashed_password: str):
+        user.hashed_password = hashed_password
         db.commit()
         db.refresh(user)
         return user

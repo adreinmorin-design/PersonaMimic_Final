@@ -45,7 +45,7 @@ const AutonomyPanel = ({ autonomyLog, swarmStatus, onDeployBrain, onSpawnBrain, 
           </div>
           <div>
             <h2 className="text-xl font-black tracking-tight uppercase text-white/90">
-              Neural Swarm <span className="text-blue-400">Cluster</span>
+              Industrial <span className="text-blue-400">Forge</span>
             </h2>
             <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mt-1">Multi-Agent Industrial Orchestration // Operational</p>
           </div>
@@ -57,13 +57,20 @@ const AutonomyPanel = ({ autonomyLog, swarmStatus, onDeployBrain, onSpawnBrain, 
       </div>
 
       {/* --- SWARM DIRECTIVE INTERFACE --- */}
-      <div className="glass-panel p-6 border-blue-500/20 bg-blue-500/[0.02]">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-             <Target size={14} className="text-blue-400" />
-             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/70">Autonomous Directive</h3>
+      <div className="glass-panel p-8 border-blue-500/30 bg-blue-500/[0.05] shadow-[0_0_50px_rgba(59,130,246,0.1)]">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+             <div className="p-2 bg-blue-500/20 rounded-lg">
+                <Target size={18} className="text-blue-400" />
+             </div>
+             <div>
+                <h3 className="text-sm font-black uppercase tracking-[0.3em] text-white">Autonomous Directive</h3>
+                <p className="text-[9px] font-mono text-blue-400/50 uppercase mt-1">System-Wide Objective Override</p>
+             </div>
           </div>
-          <div className="text-[8px] font-mono text-slate-600 uppercase">Override Mode :: Level 6 Priority</div>
+          <div className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded text-[9px] font-black text-blue-400 uppercase tracking-tighter">
+            Level 6 Priority
+          </div>
         </div>
         
         <div className="flex gap-4">
@@ -75,28 +82,29 @@ const AutonomyPanel = ({ autonomyLog, swarmStatus, onDeployBrain, onSpawnBrain, 
               value={directive}
               onChange={(e) => setDirective(e.target.value)}
               placeholder="Inject a global objective for the autonomous swarm (e.g. 'Build a SaaS for real estate analytics')..."
-              className="w-full bg-[#020617] border border-white/10 rounded-xl px-4 py-3 text-[11px] font-mono text-blue-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-all"
+              className="w-full bg-[#020617] border border-white/20 rounded-xl px-6 py-4 text-sm font-mono text-blue-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-all shadow-inner"
             />
             {directive && (
               <button 
                 onClick={handleClearDirective}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-red-400 transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-red-400 transition-colors p-2"
               >
-                <Trash2 size={12} />
+                <Trash2 size={16} />
               </button>
             )}
           </div>
           <button 
             onClick={handleSetDirective}
             disabled={isUpdating || !directive.trim()}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:hover:bg-blue-600 rounded-xl flex items-center gap-3 transition-all"
+            className="px-8 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:hover:bg-blue-600 rounded-xl flex items-center gap-3 transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)]"
           >
-            <Send size={14} className={isUpdating ? 'animate-pulse' : ''} />
-            <span className="text-[10px] font-black uppercase tracking-widest">Inject Goal</span>
+            {isUpdating ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
+            <span className="text-xs font-black uppercase tracking-widest">Inject Goal</span>
           </button>
         </div>
-        <p className="mt-3 text-[9px] text-slate-500 italic">
-          * Directives bypass standard niche discovery. All active brains will converge on this objective until cleared.
+        <p className="mt-4 text-[10px] text-slate-400 font-medium italic flex items-center gap-2">
+          <AlertCircle size={12} className="text-amber-500" />
+          Directives bypass standard niche discovery. All active brains will converge on this objective until cleared.
         </p>
       </div>
 

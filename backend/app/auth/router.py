@@ -1,3 +1,4 @@
+import datetime
 import os
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -5,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.schemas import (
     ConsentRequest,
+    LoginRequest,
     RegisterResponse,
     VoiceScriptResponse,
     VoiceVerifyResponse,
@@ -30,9 +32,30 @@ async def register(request: ConsentRequest, db: Session = Depends(get_db)):
             "status": "success",
             "role": user.role.name if user.role else "user",
             "username": user.username,
+            "is_new_user": True,
         }
     except Exception as e:
+        import traceback
+
+        with open("auth_debug.log", "a") as f:
+            f.write(f"\n--- Registration Error at {datetime.datetime.now()} ---\n")
+            traceback.print_exc(file=f)
         print(f"[DEBUG-AUTH] Registration error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/login", response_model=RegisterResponse)
+async def login(request: LoginRequest, db: Session = Depends(get_db)):
+    try:
+        user = auth_service.login(db, request)
+        return {
+            "status": "success",
+            "role": user.role.name if user.role else "user",
+            "username": user.username,
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 

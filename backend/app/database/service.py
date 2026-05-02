@@ -3,6 +3,7 @@ import os
 
 from sqlalchemy import inspect, text
 
+# Ensure all models are registered for create_all
 from app.auth.models import Role
 from app.config.models import SystemSetting
 from app.config.service import config_service
@@ -37,7 +38,7 @@ class DatabaseService:
         db.commit()
 
     @staticmethod
-    def init_db():
+    async def init_db():
         """Initialize database tables and default data."""
         try:
             logger.info("Initializing DDD Neural Database...")
@@ -80,7 +81,7 @@ class DatabaseService:
                 # 3. Seed reverse-engineering target catalog
                 from app.reverse_engineering.repository import reverse_engineering_repo
 
-                reverse_engineering_repo.seed_builtin_targets(db)
+                await reverse_engineering_repo.seed_builtin_targets(db)
 
                 db.commit()
                 logger.info("Database initialization complete.")

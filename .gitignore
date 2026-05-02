@@ -40,3 +40,8 @@ Thumbs.db
 workspace/
 .ruff_cache/
 .pytest_cache/
+/tools/
+/scratch/
+logs/*.json
+*.db*
+*.log

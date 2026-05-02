@@ -1,0 +1,164 @@
+[
+  {
+    "name": "phoenix_protocol_heartbeat_timing_25s",
+    "display_name": "Phoenix Protocol Heartbeat Timing (25s)",
+    "purpose": "To synchronize and coordinate autonomous agents in a swarm by generating periodic heartbeat signals at 25-second intervals.",
+    "module": "C:\\Users\\Albert Morin\\Desktop\\PersonaMimic_Final\\backend\\custom_tools\\phoenix_protocol_heartbeat_timing_25s.py",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "task_context": {
+          "type": "string",
+          "description": "Context for the tool execution"
+        }
+      },
+      "required": [
+        "task_context"
+      ]
+    }
+  },
+  {
+    "name": "appsmith_grid_coordinate_absolute_positioning",
+    "display_name": "Appsmith Grid Coordinate Absolute Positioning",
+    "purpose": "To enable precise positioning of UI elements on a grid layout within digital products and apps using absolute coordinates.",
+    "module": "C:\\Users\\Albert Morin\\Desktop\\PersonaMimic_Final\\backend\\custom_tools\\appsmith_grid_coordinate_absolute_positioning.py",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "task_context": {
+          "type": "string",
+          "description": "Context for the tool execution"
+        }
+      },
+      "required": [
+        "task_context"
+      ]
+    }
+  },
+  {
+    "name": "phoenix_protocol_heartbeat_timing",
+    "display_name": "Phoenix Protocol Heartbeat Timing",
+    "purpose": "To synchronize the timing of agents in a swarm for efficient and coordinated operations during autonomous missions.",
+    "module": "C:\\Users\\Albert Morin\\Desktop\\PersonaMimic_Final\\backend\\custom_tools\\phoenix_protocol_heartbeat_timing.py",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "task_context": {
+          "type": "string",
+          "description": "Context for the tool execution"
+        }
+      },
+      "required": [
+        "task_context"
+      ]
+    }
+  },
+  {
+    "name": "autogpt_sensory_synthesis_module",
+    "display_name": "AutoGPT Sensory Synthesis Module",
+    "purpose": "To replicate the sensory synthesis capabilities of AutoGPT for digital product production and app building, ensuring seamless integration with various input sources and output formats.",
+    "module": "C:\\Users\\Albert Morin\\Desktop\\PersonaMimic_Final\\backend\\custom_tools\\autogpt_sensory_synthesis_module.py",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "task_context": {
+          "type": "string",
+          "description": "Context for the tool execution"
+        }
+      },
+      "required": [
+        "task_context"
+      ]
+    }
+  },
+  {
+    "name": "metagpt_code_generation_agent",
+    "display_name": "MetaGPT Code Generation Agent",
+    "purpose": "Automate the generation of high-quality Python code for digital product development and app building tasks.",
+    "module": "C:\\Users\\Albert Morin\\Desktop\\PersonaMimic_Final\\backend\\custom_tools\\metagpt_code_generation_agent.py",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "task_context": {
+          "type": "string",
+          "description": "Context for the tool execution"
+        }
+      },
+      "required": [
+        "task_context"
+      ]
+    }
+  },
+  {
+    "name": "autogpt_sensor_data_aggregation_module",
+    "display_name": "AutoGPT Sensor Data Aggregation Module",
+    "purpose": "Aggregate sensor data from various sources to provide a unified view for real-time analysis and decision-making in autonomous swarm missions.",
+    "module": "C:\\Users\\Albert Morin\\Desktop\\PersonaMimic_Final\\backend\\custom_tools\\autogpt_sensor_data_aggregation_module.py",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "task_context": {
+          "type": "string",
+          "description": "Context for the tool execution"
+        }
+      },
+      "required": [
+        "task_context"
+      ]
+    }
+  },
+  {
+    "name": "metagpt_code_synthesis_agent",
+    "display_name": "MetaGPT Code Synthesis Agent",
+    "purpose": "Automate the synthesis of high-quality Python code for digital product production and app building by leveraging advanced natural language processing (NLP) techniques.",
+    "module": "C:\\Users\\Albert Morin\\Desktop\\PersonaMimic_Final\\backend\\custom_tools\\metagpt_code_synthesis_agent.py",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "task_context": {
+          "type": "string",
+          "description": "Context for the tool execution"
+        }
+      },
+      "required": [
+        "task_context"
+      ]
+    }
+  },
+  {
+    "name": "sensory_synthesis_engine_sse",
+    "display_name": "Sensory Synthesis Engine (SSE)",
+    "purpose": "To generate high-fidelity sensory data for digital product prototypes, enabling realistic user experience simulations.",
+    "module": "C:\\Users\\Albert Morin\\Desktop\\PersonaMimic_Final\\backend\\custom_tools\\sensory_synthesis_engine_sse.py",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "task_context": {
+          "type": "string",
+          "description": "Context for the tool execution"
+        }
+      },
+      "required": [
+        "task_context"
+      ]
+    }
+  },
+  {
+    "name": "metagpt_agent_for_code_generation",
+    "display_name": "MetaGPT Agent for Code Generation",
+    "purpose": "Automate the generation of high-quality Python code snippets for digital product development tasks, enhancing productivity and consistency in app building projects.",
+    "module": "C:\\Users\\Albert Morin\\Desktop\\PersonaMimic_Final\\backend\\custom_tools\\metagpt_agent_for_code_generation.py",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "task_context": {
+          "type": "string",
+          "description": "Context for the tool execution"
+        }
+      },
+      "required": [
+        "task_context"
+      ]
+    }
+  }
+]

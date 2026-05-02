@@ -38,7 +38,7 @@ class ChatService:
 
         while current_step < max_steps:
             try:
-                response = self.engine.generate_response(
+                response = await self.engine.generate_response(
                     prompt=system_prompt,
                     chat_context=history_dicts,
                     tools=TOOLS,
@@ -61,7 +61,11 @@ class ChatService:
                     tool_name, tool_args = PersonaEngine.unwrap_tool_call(tool)
                     logger.info(f"[CHAT TOOL] {tool_name} | {tool_args}")
                     try:
-                        result = execute_tool(tool_name, tool_args) if tool_name else "Unknown tool"
+                        result = (
+                            await execute_tool(tool_name, tool_args)
+                            if tool_name
+                            else "Unknown tool"
+                        )
                     except Exception as exc:
                         logger.error("Tool execution failed for %s: %s", tool_name, exc)
                         result = f"Tool execution error: {exc}"
@@ -87,7 +91,7 @@ class ChatService:
             audio_url = await voice_service.text_to_speech(final_response_text, voice_id)
 
         # Persist Interaction
-        self._log_interaction(db, user.id if user else None, message, final_response_text)
+        await self._log_interaction(db, user.id if user else None, message, final_response_text)
 
         # Get Workspace Files
         files = []
@@ -112,11 +116,11 @@ class ChatService:
             role=user.role.name if user and user.role else "system",
         )
 
-    def _log_interaction(self, db: Session, user_id: int | None, message: str, response: str):
+    async def _log_interaction(self, db: Session, user_id: int | None, message: str, response: str):
         if user_id is None:
             return
         try:
-            chat_repo.log_interaction(db, user_id, message, response)
+            await chat_repo.log_interaction(db, user_id, message, response)
         except Exception as e:
             logger.error(f"Failed to log interaction: {e}")
 
