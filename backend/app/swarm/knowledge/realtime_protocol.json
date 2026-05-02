@@ -54,5 +54,15 @@
     "method": "JWT",
     "connection_param": "apikey",
     "refresh_event": "access_token"
+  },
+  "nats_bus": {
+    "url": "nats://localhost:4222",
+    "subjects": {
+      "task_started": "swarm.task.started",
+      "task_completed": "swarm.task.completed",
+      "task_failed": "swarm.task.failed",
+      "telemetry": "swarm.telemetry.metrics"
+    },
+    "protocol": "Request-Reply / Pub-Sub"
   }
 }

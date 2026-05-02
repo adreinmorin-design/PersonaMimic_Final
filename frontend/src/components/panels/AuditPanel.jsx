@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { ShieldCheck, ShieldAlert, Clock, RefreshCw, MessageSquare } from 'lucide-react';
 import { api } from '../../lib/api';
 
+const isPageVisible = () => typeof document === 'undefined' || !document.hidden;
+
 const AuditPanel = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -19,9 +21,24 @@ const AuditPanel = () => {
   };
 
   useEffect(() => {
-    fetchReviews();
-    const interval = setInterval(fetchReviews, 15000);
-    return () => clearInterval(interval);
+    const refreshWhenVisible = () => {
+      if (isPageVisible()) {
+        fetchReviews();
+      }
+    };
+
+    refreshWhenVisible();
+    const interval = setInterval(refreshWhenVisible, 15000);
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchReviews();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   return (

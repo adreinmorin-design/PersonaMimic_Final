@@ -2,7 +2,9 @@ import asyncio
 import json
 import logging
 import os
+import shutil
 import zipfile
+<<<<<<< HEAD
 <<<<<<< HEAD
 import shutil
 from typing import Any, Optional
@@ -12,8 +14,17 @@ from pydantic import BaseModel
 >>>>>>> ee8c098f736845d23a6b0c0cb6f8597f07c6eb01
 
 from pydantic import BaseModel
+=======
+from contextlib import asynccontextmanager
+
+from pydantic import BaseModel
+from sqlalchemy.exc import SQLAlchemyError
+
+from app.config.service import config_service
+>>>>>>> 29c4ee0028ba1a2d20e072ba031d1da186fa306a
 from app.database.database import SessionLocal
 from app.products.repository import product_repo
+from app.swarm.persona_engine import PersonaEngine
 
 from .base import (
     FACTORY_MIN_SCORE,
@@ -36,9 +47,21 @@ from .base import (
     _resolve_workspace_path,
 >>>>>>> ee8c098f736845d23a6b0c0cb6f8597f07c6eb01
 )
+from .engineering import assemble_full_product
+from .quality import _verify_quality_gate
 from .whop_api import create_whop_post, create_whop_product, list_whop_experiences
 
 logger = logging.getLogger("swarm.tools.commerce")
+
+
+@asynccontextmanager
+async def get_async_db():
+    """Asynchronous session manager to prevent blocking the event loop."""
+    db = await asyncio.to_thread(SessionLocal)
+    try:
+        yield db
+    finally:
+        await asyncio.to_thread(db.close)
 
 
 class EcommerceArgs(BaseModel):
@@ -59,8 +82,6 @@ async def package_product(product_name: str, files: list = None):
 >>>>>>> ee8c098f736845d23a6b0c0cb6f8597f07c6eb01
     """Zip workspace files into a product archive."""
     try:
-        from .quality import _verify_quality_gate
-
         selected = _infer_product_files(product_name, files)
         verdict = await _verify_quality_gate(product_name, selected)
         if not verdict["passed"]:
@@ -121,8 +142,6 @@ def list_products() -> str:
 
         # Cleanup source directory after packaging
         if await asyncio.to_thread(os.path.isdir, source_path):
-            import shutil
-
             await asyncio.to_thread(shutil.rmtree, source_path)
             logger.info(f"Source folder {source_path} cleaned up after packaging.")
 
@@ -136,8 +155,7 @@ def list_products() -> str:
 
 async def list_products():
     """List all digital products in the database."""
-    db = SessionLocal()
-    try:
+    async with get_async_db() as db:
         products = await product_repo.list_all(db)
         if not products:
             return "No products found."
@@ -145,8 +163,24 @@ async def list_products():
             [f"* {p.name} | Status: {p.status} | URL: {p.url or 'N/A'}" for p in products]
 >>>>>>> ee8c098f736845d23a6b0c0cb6f8597f07c6eb01
         )
-    finally:
-        db.close()
+
+
+async def _get_api_key(api_key: str | None = None) -> str | None:
+    """Helper function to retrieve API key cleanly."""
+    if api_key:
+        return api_key
+
+    try:
+        async with get_async_db() as db:
+            def fetch_key():
+                return config_service.get_setting(db, "WHOP_API_KEY")
+            db_key = await asyncio.to_thread(fetch_key)
+            if db_key:
+                return db_key
+    except (SQLAlchemyError, KeyError) as e:
+        logger.warning(f"Error fetching API key from database: {e}")
+
+    return os.getenv("WHOP_API_KEY")
 
 
 <<<<<<< HEAD
@@ -156,12 +190,17 @@ def ecommerce_publisher(
 =======
 async def ecommerce_publisher(
     platform: str,
+<<<<<<< HEAD
     api_key: str = None,
 >>>>>>> ee8c098f736845d23a6b0c0cb6f8597f07c6eb01
+=======
+    api_key: str | None = None,
+>>>>>>> 29c4ee0028ba1a2d20e072ba031d1da186fa306a
     title: str = "product",
     description: str = "",
     price: float = 0,
     currency: str = "USD",
+<<<<<<< HEAD
 <<<<<<< HEAD
     company_id: Optional[str] = None,
     product_name: Optional[str] = None,
@@ -241,29 +280,22 @@ def revenue_auditor(days: int = 7) -> str:
 
 =======
     company_id: str = None,
+=======
+    company_id: str | None = None,
+>>>>>>> 29c4ee0028ba1a2d20e072ba031d1da186fa306a
 ):
     """Publish product to Gumroad, Whop, or Stripe."""
     try:
-        if not api_key:
-            try:
-                db = SessionLocal()
-                try:
-                    from app.config.service import config_service
+        resolved_api_key = await _get_api_key(api_key)
 
-                    api_key = config_service.get_setting(db, "WHOP_API_KEY")
-                finally:
-                    db.close()
-            except Exception:
-                api_key = os.getenv("WHOP_API_KEY")
-
-        if not api_key:
+        if not resolved_api_key:
             return "ERROR: No API key found in environment or database."
 
         await _ensure_publish_ready_product(title)
 
         match platform.lower():
             case "whop":
-                res = await create_whop_product(api_key, title, description, price)
+                res = await create_whop_product(resolved_api_key, title, description, price)
                 if "error" in res:
                     return f"Whop Publish Failed: {res['error']}"
 
@@ -294,10 +326,6 @@ async def launch_product(
     4. Generates and publishes marketing post on Whop.
     """
     try:
-        from app.swarm.persona_engine import PersonaEngine
-
-        from .engineering import assemble_full_product
-
         # 1. Assembly
         logger.info(f"[LAUNCH] Starting assembly for {product_name}...")
         assembly_res = await assemble_full_product(product_name, niche, product_type)
@@ -320,7 +348,7 @@ async def launch_product(
         description = desc_res.get("content", "Industrial Grade Digital Asset")
 
         publish_res = await ecommerce_publisher(
-            "whop", title=product_name, description=description, price=price
+            "whop", api_key=None, title=product_name, description=description, price=price
         )
         if _is_failure_result(publish_res):
             return f"Launch aborted at Publishing: {publish_res}"
@@ -336,20 +364,10 @@ async def launch_product(
         post_content = post_res.get("content", "")
 
         # Find community experience
-        api_key = None
-        try:
-            db = SessionLocal()
-            try:
-                from app.config.service import config_service
+        resolved_api_key = await _get_api_key()
 
-                api_key = config_service.get_setting(db, "WHOP_API_KEY")
-            finally:
-                db.close()
-        except Exception:
-            api_key = os.getenv("WHOP_API_KEY")
-
-        if api_key:
-            experiences = await list_whop_experiences(api_key)
+        if resolved_api_key:
+            experiences = await list_whop_experiences(resolved_api_key)
             # Find the first 'forum' or 'community' experience
             exp_id = None
             if isinstance(experiences, dict) and "data" in experiences:
@@ -367,7 +385,7 @@ async def launch_product(
                     exp_id = experiences[0].get("id")
 
             if exp_id:
-                post_api_res = await create_whop_post(api_key, exp_id, post_content)
+                post_api_res = await create_whop_post(resolved_api_key, exp_id, post_content)
                 if "error" in post_api_res:
                     logger.warning(f"Post failed: {post_api_res['error']}")
                 else:
@@ -450,8 +468,7 @@ def _ensure_publish_ready_product(product_name: str) -> dict[str, Any]:
     res = package_product(product_name, _infer_product_files(product_name, None))
 =======
 async def _ensure_publish_ready_product(product_name: str):
-    db = SessionLocal()
-    try:
+    async with get_async_db() as db:
         p = await _find_product_record(db, product_name, allow_publish_ready_fallback=True)
         if (
             p
@@ -466,8 +483,6 @@ async def _ensure_publish_ready_product(product_name: str):
                 "score": p.adversary_score or 0,
                 "status": p.status,
             }
-    finally:
-        db.close()
 
     p_target = p.name if p else product_name
     res = await package_product(p_target, _infer_product_files(p_target))
@@ -475,12 +490,12 @@ async def _ensure_publish_ready_product(product_name: str):
     if _is_failure_result(res):
         raise RuntimeError(res)
 
-    db = SessionLocal()
-    try:
+    async with get_async_db() as db:
         p = await _find_product_record(db, product_name, allow_publish_ready_fallback=True)
         if not p or not p.path or not await asyncio.to_thread(os.path.exists, p.path):
             raise RuntimeError("Packaging failed to produce artifact.")
         return {"name": p.name, "path": p.path, "score": p.adversary_score or 0, "status": p.status}
+<<<<<<< HEAD
     finally:
         db.close()
 <<<<<<< HEAD
@@ -523,3 +538,5 @@ def _format_currency(price: float, currency: str) -> str:
     return f"{currency.upper()} {price:.2f}"
 =======
 >>>>>>> ee8c098f736845d23a6b0c0cb6f8597f07c6eb01
+=======
+>>>>>>> 29c4ee0028ba1a2d20e072ba031d1da186fa306a

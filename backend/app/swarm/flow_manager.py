@@ -10,7 +10,8 @@ from typing import TypedDict, Optional
 
 from langgraph.graph import END, StateGraph
 
-from app.database.database import get_db
+from app.database.database import db_session as get_db
+from app.products.repository import product_repo
 from app.reverse_engineering.repository import reverse_engineering_repo
 from app.reverse_engineering.schemas import SynthesisRequest
 from app.swarm.synthesis_agent import synthesis_agent
@@ -117,7 +118,7 @@ async def planner_node(state: SwarmState):
     res_json = await execute_tool(
         "strategic_planner",
         {"niche": state["niche"], "current_specs": state["specs"]},
-        brain_name="MasterBrain",
+        brain_name="Architect",
     )
 
     import json
@@ -156,8 +157,18 @@ async def generator_node(state: SwarmState):
             "niche": state["niche"],
             "specs": state["specs"],
         },
-        brain_name="MasterBrain",
+        brain_name="LegalMind",
     )
+    
+    # Register product in database so it appears in the dashboard
+    with get_db() as db:
+        await product_repo.update_state(
+            db, 
+            state["product_name"], 
+            status="generated", 
+            niche=state["niche"]
+        )
+        
     return {"status": "generated", "attempts": state["attempts"] + 1}
 
 

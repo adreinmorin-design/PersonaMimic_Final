@@ -14,11 +14,9 @@ class SystemIntelligenceService:
         """
         Assesses the system's current capabilities based on successful reverse-engineering.
         """
-        completed_jobs = await reverse_engineering_repo.list_jobs_by_status(db, "completed")
-        job_count = len(completed_jobs)
-
-        # Unique target IDs
-        capabilities = list({j.target for j in completed_jobs if j.target})
+        metrics = await reverse_engineering_repo.get_job_metrics_by_status(db, "completed")
+        job_count = int(metrics["job_count"])
+        capabilities = sorted(set(metrics["capabilities"]))
 
         tier = min(10, 1 + (len(capabilities) // 3))
         assessment = self._resolve_assessment(tier)

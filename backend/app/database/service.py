@@ -49,9 +49,9 @@ class DatabaseService:
 
                 # 1. Create default roles
                 roles = ["owner", "user"]
+                existing_roles = {name for (name,) in db.query(Role.name).filter(Role.name.in_(roles)).all()}
                 for r_name in roles:
-                    role = db.query(Role).filter(Role.name == r_name).first()
-                    if not role:
+                    if r_name not in existing_roles:
                         db.add(Role(name=r_name))
 
                 # 2. Mirror environment keys to secure DB
@@ -62,26 +62,46 @@ class DatabaseService:
                     "BRAND_NAME",
                     "OLLAMA_CLOUD_KEY",
                     "OLLAMA_CLOUD_URL",
+                    "OPENAI_API_KEY",
+                    "GROQ_API_KEY",
+                    "ELEVENLABS_API_KEY",
+                    "GOOGLE_API_KEY",
+                    "USE_CLOUD",
+                    "CURRENT_MODEL",
                 ]
+                settings_map = {
+                    setting.key: setting
+                    for setting in db.query(SystemSetting)
+                    .filter(SystemSetting.key.in_([*env_keys, "model"]))
+                    .all()
+                }
                 for key in env_keys:
                     val = os.getenv(key)
                     if not val:
                         continue
 
-                    existing = db.query(SystemSetting).filter(SystemSetting.key == key).first()
+                    # Map env keys to internal db keys if necessary
+                    db_key = key.lower() if key in ["USE_CLOUD", "CURRENT_MODEL"] else key
+                    if db_key == "current_model":
+                        db_key = "model"
+
+                    existing = settings_map.get(db_key)
                     encrypted_val = config_service.encrypt(val)
 
                     if not existing:
-                        db.add(SystemSetting(key=key, value=encrypted_val, is_encrypted=True))
-                        logger.info(f"[VAULT] Mirrored {key} to system settings.")
+                        existing = SystemSetting(key=db_key, value=encrypted_val, is_encrypted=True)
+                        db.add(existing)
+                        settings_map[db_key] = existing
+                        logger.info(f"[VAULT] Mirrored {key} to system settings as {db_key}.")
                     elif existing.value != encrypted_val:
                         existing.value = encrypted_val
-                        logger.info(f"[VAULT] Updated {key} in system settings.")
+                        existing.is_encrypted = True
+                        logger.info(f"[VAULT] Updated {db_key} in system settings.")
 
                 # 3. Seed reverse-engineering target catalog
                 from app.reverse_engineering.repository import reverse_engineering_repo
 
-                await reverse_engineering_repo.seed_builtin_targets(db)
+                reverse_engineering_repo._seed_builtin_targets_sync(db)
 
                 db.commit()
                 logger.info("Database initialization complete.")

@@ -37,7 +37,7 @@ async def create_custom_tool(name: str, schema: dict, code: str):
 
 
 async def spawn_sub_brain(
-    name: str, model: str = "qwen2.5:7b", persona_type: str = "mimic", niche: str = ""
+    name: str, model: str = "qwen2.5-coder:7b", persona_type: str = "mimic", niche: str = ""
 ):
     """Spawn a specialized AI brain."""
     try:

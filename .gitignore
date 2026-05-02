@@ -8,6 +8,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.venv_broken/
+**/.venv_broken/
 
 # Environment Variables
 .env

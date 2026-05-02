@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class SwarmSpawnRequest(BaseModel):
     name: str
-    model: str = "qwen2.5:7b"
+    model: str = "qwen2.5-coder:7b"
     persona_type: str = "coding"
     niche: str = ""
 

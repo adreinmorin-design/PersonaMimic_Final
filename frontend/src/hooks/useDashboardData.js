@@ -3,9 +3,11 @@ import { api } from '../lib/api';
 
 const DEFAULT_REVENUE = { total: 0, growth: '+0%', customers: 0 };
 const DEFAULT_MODEL = 'llama3.1';
+const isPageVisible = () => typeof document === 'undefined' || !document.hidden;
 
 export function useDashboardData({ activeTab, showSentinel }) {
   const [autonomyLog, setAutonomyLog] = useState([]);
+  const [globalDirective, setGlobalDirective] = useState('');
   const [swarmStatus, setSwarmStatus] = useState({});
   const [vaultSettings, setVaultSettings] = useState([]);
   const [products, setProducts] = useState([]);
@@ -25,6 +27,7 @@ export function useDashboardData({ activeTab, showSentinel }) {
       api.get('/swarm/status'),
     ]);
     setAutonomyLog(autonomyResponse.data.log || []);
+    setGlobalDirective(autonomyResponse.data.directive || '');
     setSwarmStatus(swarmResponse.data || {});
   };
 
@@ -50,23 +53,29 @@ export function useDashboardData({ activeTab, showSentinel }) {
     let cancelled = false;
 
     const bootstrap = async () => {
-      try {
-        const [healthResponse, modelsResponse, productsResponse] = await Promise.all([
-          api.get('/config/health'),
-          api.get('/config/models'),
-          api.get('/products'),
-        ]);
+      const [healthResult, modelsResult, productsResult] = await Promise.allSettled([
+        api.get('/config/health'),
+        api.get('/config/models'),
+        api.get('/products'),
+      ]);
 
-        if (cancelled) {
-          return;
-        }
+      if (healthResult.status === 'fulfilled' && !cancelled) {
+        setSelectedModel(healthResult.value.data.model || DEFAULT_MODEL);
+        setUseCloud(Boolean(healthResult.value.data.cloud));
+      } else if (healthResult.status === 'rejected') {
+        console.error('Health fetch failed:', healthResult.reason);
+      }
 
-        setSelectedModel(healthResponse.data.model || DEFAULT_MODEL);
-        setUseCloud(Boolean(healthResponse.data.cloud));
-        setModels(modelsResponse.data.models || []);
-        setProducts(productsResponse.data.products || []);
-      } catch (error) {
-        console.error('Initialization fetch failed:', error);
+      if (modelsResult.status === 'fulfilled' && !cancelled) {
+        setModels(modelsResult.value.data.models || []);
+      } else if (modelsResult.status === 'rejected') {
+        console.error('Models fetch failed:', modelsResult.reason);
+      }
+
+      if (productsResult.status === 'fulfilled' && !cancelled) {
+        setProducts(productsResult.value.data.products || []);
+      } else if (productsResult.status === 'rejected') {
+        console.error('Products fetch failed:', productsResult.reason);
       }
     };
 
@@ -85,6 +94,9 @@ export function useDashboardData({ activeTab, showSentinel }) {
     let cancelled = false;
 
     const runRefresh = async (refreshFn, label) => {
+      if (!isPageVisible()) {
+        return;
+      }
       try {
         await refreshFn();
       } catch (error) {
@@ -96,10 +108,23 @@ export function useDashboardData({ activeTab, showSentinel }) {
 
     runRefresh(refreshRevenue, 'Revenue fetch');
 
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        runRefresh(refreshRevenue, 'Revenue fetch');
+        if (activeTab === 'forge') {
+          runRefresh(refreshAutonomy, 'Autonomy status poll');
+        }
+        if (activeTab === 'vault') {
+          runRefresh(refreshVault, 'Vault fetch');
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     let autonomyIntervalId;
     let revenueIntervalId;
 
-    if (activeTab === 'autonomy') {
+    if (activeTab === 'forge') {
       runRefresh(refreshAutonomy, 'Autonomy status poll');
       autonomyIntervalId = window.setInterval(() => {
         runRefresh(refreshAutonomy, 'Autonomy status poll');
@@ -116,6 +141,7 @@ export function useDashboardData({ activeTab, showSentinel }) {
 
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.clearInterval(autonomyIntervalId);
       window.clearInterval(revenueIntervalId);
     };
@@ -162,6 +188,7 @@ export function useDashboardData({ activeTab, showSentinel }) {
     selectedModel,
     useCloud,
     revenue,
+    globalDirective,
     refreshProducts,
     refreshVault,
     saveVaultEntry,

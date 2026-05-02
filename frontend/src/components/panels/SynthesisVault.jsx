@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '../../lib/api';
 
+const isPageVisible = () => typeof document === 'undefined' || !document.hidden;
+
 const SynthesisVault = () => {
   const [tools, setTools] = useState([]);
   const [jobs, setJobs] = useState([]);
@@ -22,9 +24,24 @@ const SynthesisVault = () => {
       }
     };
 
-    fetchVault();
-    const interval = setInterval(fetchVault, 5000);
-    return () => clearInterval(interval);
+    const refreshWhenVisible = () => {
+      if (isPageVisible()) {
+        fetchVault();
+      }
+    };
+
+    refreshWhenVisible();
+    const interval = setInterval(refreshWhenVisible, 5000);
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchVault();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const jobsById = useMemo(() => {
@@ -180,4 +197,3 @@ const SynthesisVault = () => {
 };
 
 export default SynthesisVault;
-

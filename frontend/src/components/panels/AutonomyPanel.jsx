@@ -1,14 +1,46 @@
 import React, { useState } from 'react';
-import { Activity, AlertCircle, BarChart3, Bot, Terminal, Zap, Send, Target, Trash2 } from 'lucide-react';
-import SwarmGraph from '../SwarmGraph';
+import { Activity, AlertCircle, BarChart3, Bot, Terminal, Zap, Send, Target, Trash2, RefreshCw } from 'lucide-react';
 import StatusLog from '../StatusLog';
 import ReverseEngineeringAdminPanel from './ReverseEngineeringAdminPanel';
 import SynthesisVault from './SynthesisVault';
 import { api } from '../../lib/api';
 
-const AutonomyPanel = ({ autonomyLog, swarmStatus, onDeployBrain, onSpawnBrain, onStopBrain }) => {
+const AutonomyPanel = ({ globalDirective, autonomyLog, swarmStatus, onDeployBrain, onSpawnBrain, onStopBrain }) => {
   const [directive, setDirective] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+
+  const brains = Object.values(swarmStatus || {});
+  const activeBrain = brains.find(b => b.running) || {};
+  const currentPhase = activeBrain.phase || 'idle';
+
+  const getStatus = (step) => {
+    switch(step) {
+      case 'Inception':
+        if (['task_init', 'hunting'].includes(currentPhase)) return { status: 'Active', level: 40 };
+        if (['generating', 'coding', 'reverse_engineering', 'auditing', 'finalizing', 'completed'].includes(currentPhase)) return { status: 'Done', level: 100 };
+        return { status: 'Wait', level: 0 };
+      case 'Asset Coding':
+        if (['generating', 'coding', 'reverse_engineering'].includes(currentPhase)) return { status: 'Active', level: 65 };
+        if (['auditing', 'finalizing', 'completed'].includes(currentPhase)) return { status: 'Done', level: 100 };
+        return { status: 'Wait', level: 0 };
+      case 'Functional Validation':
+        if (['auditing', 'fault_detected', 'repaired'].includes(currentPhase)) return { status: 'Active', level: 50 };
+        if (['finalizing', 'completed'].includes(currentPhase)) return { status: 'Done', level: 100 };
+        return { status: 'Wait', level: 0 };
+      case 'Market Launch':
+        if (currentPhase === 'finalizing') return { status: 'Active', level: 80 };
+        if (currentPhase === 'completed') return { status: 'Done', level: 100 };
+        return { status: 'Wait', level: 0 };
+      default: return { status: 'Wait', level: 0 };
+    }
+  };
+
+  const steps = [
+    { step: 'Inception', ...getStatus('Inception') },
+    { step: 'Asset Coding', ...getStatus('Asset Coding') },
+    { step: 'Functional Validation', ...getStatus('Functional Validation') },
+    { step: 'Market Launch', ...getStatus('Market Launch') },
+  ];
 
   const handleSetDirective = async () => {
     if (!directive.trim()) return;
@@ -73,35 +105,49 @@ const AutonomyPanel = ({ autonomyLog, swarmStatus, onDeployBrain, onSpawnBrain, 
           </div>
         </div>
         
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <input 
-              id="autonomy-directive"
-              name="directive"
-              type="text" 
-              value={directive}
-              onChange={(e) => setDirective(e.target.value)}
-              placeholder="Inject a global objective for the autonomous swarm (e.g. 'Build a SaaS for real estate analytics')..."
-              className="w-full bg-[#020617] border border-white/20 rounded-xl px-6 py-4 text-sm font-mono text-blue-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-all shadow-inner"
-            />
-            {directive && (
-              <button 
-                onClick={handleClearDirective}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-red-400 transition-colors p-2"
-              >
-                <Trash2 size={16} />
-              </button>
-            )}
+        {globalDirective ? (
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-6 relative overflow-hidden flex flex-col gap-4">
+             <div className="flex items-center gap-3">
+                <div className="w-2.5 h-2.5 bg-blue-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
+                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-blue-300">Active Global Directive</h4>
+             </div>
+             <p className="text-sm text-white font-mono break-words whitespace-pre-wrap leading-relaxed">
+               {globalDirective}
+             </p>
+             <div className="flex justify-end mt-2">
+                <button 
+                  onClick={handleClearDirective}
+                  disabled={isUpdating}
+                  className="px-6 py-2 bg-red-500/20 hover:bg-red-500/40 text-red-300 text-xs font-bold uppercase tracking-widest rounded-lg transition-all border border-red-500/30 flex items-center gap-2"
+                >
+                  {isUpdating ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                  Clear Directive
+                </button>
+             </div>
           </div>
-          <button 
-            onClick={handleSetDirective}
-            disabled={isUpdating || !directive.trim()}
-            className="px-8 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:hover:bg-blue-600 rounded-xl flex items-center gap-3 transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)]"
-          >
-            {isUpdating ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
-            <span className="text-xs font-black uppercase tracking-widest">Inject Goal</span>
-          </button>
-        </div>
+        ) : (
+          <div className="flex gap-4">
+            <div className="flex-1 relative">
+              <input 
+                id="autonomy-directive"
+                name="directive"
+                type="text" 
+                value={directive}
+                onChange={(e) => setDirective(e.target.value)}
+                placeholder="Inject a global objective for the autonomous swarm (e.g. 'Build a SaaS for real estate analytics')..."
+                className="w-full bg-[#020617] border border-white/20 rounded-xl px-6 py-4 text-sm font-mono text-blue-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-all shadow-inner"
+              />
+            </div>
+            <button 
+              onClick={handleSetDirective}
+              disabled={isUpdating || !directive.trim()}
+              className="px-8 py-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:hover:bg-blue-600 rounded-xl flex items-center gap-3 transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)]"
+            >
+              {isUpdating ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
+              <span className="text-xs font-black uppercase tracking-widest">Inject Goal</span>
+            </button>
+          </div>
+        )}
         <p className="mt-4 text-[10px] text-slate-400 font-medium italic flex items-center gap-2">
           <AlertCircle size={12} className="text-amber-500" />
           Directives bypass standard niche discovery. All active brains will converge on this objective until cleared.
@@ -216,16 +262,78 @@ const AutonomyPanel = ({ autonomyLog, swarmStatus, onDeployBrain, onSpawnBrain, 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        <div className="lg:col-span-3 glass-panel p-6 border-white/5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-4 glass-panel p-6 border-white/5">
           <div className="flex items-center justify-between mb-6">
              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Neural Topography</h3>
-             <div className="px-3 py-1 bg-white/5 rounded text-[8px] font-black text-slate-500 uppercase">Real-Time Visualization</div>
+             <div className="px-3 py-1 bg-white/5 rounded text-[8px] font-black text-slate-500 uppercase">Node Status</div>
           </div>
-          <SwarmGraph swarmStatus={swarmStatus} />
+          <div className="flex-1 overflow-y-auto no-scrollbar space-y-3">
+             {Object.entries(swarmStatus || {}).map(([name, data]) => {
+                let lightClass = "bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)]"; // Idle
+                let lightLabel = "IDLE";
+                if (data.running) {
+                   if (['idle', 'cooldown', 'stopped'].includes(data.phase)) {
+                      // Let it remain blue
+                   } else if (['task_init', 'hunting'].includes(data.phase)) {
+                      lightClass = "bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.6)] animate-pulse";
+                      lightLabel = "QUEUED / INIT";
+                   } else {
+                      lightClass = "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)] animate-pulse";
+                      lightLabel = "ACTIVE";
+                   }
+                }
+
+                return (
+                   <div key={name} className="flex items-center justify-between p-3 bg-black/20 rounded-lg border border-white/5">
+                      <div className="flex items-center gap-4">
+                         <div className={`w-3 h-3 rounded-full ${lightClass}`} />
+                         <div>
+                            <div className="text-[10px] font-black uppercase text-white tracking-widest">{name} Node</div>
+                            <div className="text-[8px] font-mono text-slate-500 uppercase mt-0.5">Phase: {data.phase || 'N/A'}</div>
+                         </div>
+                      </div>
+                      <div className="text-[8px] font-black tracking-widest uppercase opacity-40">
+                         {lightLabel}
+                      </div>
+                   </div>
+                );
+             })}
+             {Object.keys(swarmStatus || {}).length === 0 && (
+                <div className="h-full flex flex-col items-center justify-center opacity-20 uppercase font-black tracking-[0.2em] gap-2 py-8">
+                   <Zap size={16} />
+                   No Nodes Deployed
+                </div>
+             )}
+          </div>
         </div>
 
-        <div className="lg:col-span-2 glass-panel p-6 border-white/5 flex flex-col h-[400px]">
+        <div className="lg:col-span-3 glass-panel p-6 border-white/5 flex flex-col justify-center gap-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400">Production Line</h3>
+            <div className={`w-1.5 h-1.5 rounded-full ${brains.some(b => b.running) ? 'bg-blue-500 animate-ping' : 'bg-white/10'}`} />
+          </div>
+          <div className="space-y-6">
+            {steps.map((item) => (
+              <div key={item.step} className="space-y-2">
+                <div className="flex justify-between text-[8px] font-black uppercase tracking-wider">
+                  <span className={item.level > 0 ? 'opacity-100 text-white' : 'opacity-40'}>{item.step}</span>
+                  <span className={item.status === 'Active' ? 'text-blue-400' : item.status === 'Done' ? 'text-green-400 opacity-60' : 'opacity-20'}>
+                    {item.status}
+                  </span>
+                </div>
+                <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                  <div 
+                    style={{ width: `${item.level}%`, transition: 'width 0.3s ease-in-out' }} 
+                    className={`h-full ${item.status === 'Done' ? 'bg-green-500/50' : 'bg-blue-500'}`}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="lg:col-span-5 glass-panel p-6 border-white/5 flex flex-col h-[400px]">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-[#10b981]">
               <Terminal size={14} className="animate-pulse" />

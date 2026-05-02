@@ -8,11 +8,11 @@ const StatusLog = ({ logs }) => {
 
   // Auto-scroll logic: only scroll if enabled and ref is valid
   useEffect(() => {
-    if (autoScroll && logEndRef.current instanceof Element) {
+    if (autoScroll && containerRef.current instanceof Element) {
       try {
-        logEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+        containerRef.current.scrollTop = containerRef.current.scrollHeight;
       } catch (e) {
-        console.warn("[SCROLL-ERROR] Failed to scroll telemetry into view:", e);
+        console.warn("[SCROLL-ERROR] Failed to scroll telemetry:", e);
       }
     }
   }, [logs, autoScroll]);

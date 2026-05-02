@@ -1,5 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
+from app.database.database import get_db
+from app.swarm.models import ReviewPool
 from app.swarm.schemas import AdversaryRequest, SwarmDirectiveRequest, SwarmSpawnRequest
 from app.swarm.service import swarm_manager
 
@@ -31,9 +34,9 @@ async def swarm_stop(name: str):
 async def autonomy_status():
     # Legacy support for main Dre brain
     if "Dre" not in swarm_manager.brains:
-        return {"running": False, "tasks_completed": 0, "log": []}
+        return {"running": False, "tasks_completed": 0, "log": [], "directive": getattr(swarm_manager, 'global_directive', None)}
     dre = swarm_manager.brains["Dre"]
-    return {"running": dre.running, "tasks_completed": dre.task_count, "log": dre.log[-30:]}
+    return {"running": dre.running, "tasks_completed": dre.task_count, "log": dre.log[-30:], "directive": getattr(swarm_manager, 'global_directive', None)}
 
 
 @router.post("/adversary/review")
@@ -55,24 +58,30 @@ async def set_swarm_directive(req: SwarmDirectiveRequest):
 
 
 @router.get("/reviews")
-async def get_reviews():
-    from app.database.database import SessionLocal
-    from app.swarm.models import ReviewPool
-
-    db = SessionLocal()
-    try:
-        reviews = db.query(ReviewPool).order_by(ReviewPool.timestamp.desc()).limit(50).all()
-        return [
-            {
-                "id": r.id,
-                "product_name": r.product_name,
-                "reviewer_brain": r.reviewer_brain,
-                "status": r.status,
-                "critique": r.critique,
-                "iteration": r.iteration,
-                "timestamp": r.timestamp.isoformat() + "Z",
-            }
-            for r in reviews
-        ]
-    finally:
-        db.close()
+async def get_reviews(db: Session = Depends(get_db)):
+    reviews = (
+        db.query(
+            ReviewPool.id,
+            ReviewPool.product_name,
+            ReviewPool.reviewer_brain,
+            ReviewPool.status,
+            ReviewPool.critique,
+            ReviewPool.iteration,
+            ReviewPool.timestamp,
+        )
+        .order_by(ReviewPool.timestamp.desc())
+        .limit(50)
+        .all()
+    )
+    return [
+        {
+            "id": review_id,
+            "product_name": product_name,
+            "reviewer_brain": reviewer_brain,
+            "status": status,
+            "critique": critique,
+            "iteration": iteration,
+            "timestamp": timestamp.isoformat() + "Z",
+        }
+        for review_id, product_name, reviewer_brain, status, critique, iteration, timestamp in reviews
+    ]

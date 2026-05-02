@@ -216,18 +216,27 @@ class BrainInstance:
         # 3. Execute Graph
         try:
             self._set_progress(
-                "generating",
+                "task_init",
                 f"Forging industrial solution for '{niche}'...",
                 task_id=task_id,
                 log_event=True,
             )
 
-            # Running the compiled subgraph
-            final_state = await swarm_workflow.ainvoke(initial_state)
-
-            self._set_progress(
-                "auditing", "Adversary performing quality audit...", task_id=task_id, log_event=True
-            )
+            # Running the compiled subgraph via astream for real-time Telemetry UI updates
+            final_state = initial_state
+            async for step_out in swarm_workflow.astream(initial_state):
+                if "planner" in step_out:
+                    self._set_progress("task_init", "Orchestrator mapped architecture.", task_id=task_id)
+                    final_state = step_out["planner"]
+                elif "generator" in step_out:
+                    self._set_progress("coding", "Codesmith forging assets...", task_id=task_id)
+                    final_state = step_out["generator"]
+                elif "adversary" in step_out:
+                    self._set_progress("auditing", "Adversary validating quality...", task_id=task_id)
+                    final_state = step_out["adversary"]
+                elif "healer" in step_out:
+                    self._set_progress("fault_detected", "Healing logic faults...", task_id=task_id)
+                    final_state = step_out["healer"]
 
             product_name = final_state["product_name"]
             if final_state["adversary_report"].get("passed"):
@@ -448,7 +457,7 @@ class SwarmManager:
 
     async def initialize(self):
         """Perform async initialization of the swarm brains."""
-        default_model = os.getenv("CURRENT_MODEL", "qwen2.5:7b")
+        default_model = os.getenv("CURRENT_MODEL", "qwen2.5-coder:7b")
         cloud_model = os.getenv("CLOUD_MODEL", "llama-3.3-70b-versatile")
 
         is_lite = os.getenv("STUDIO_LITE_MODE") == "1"
@@ -456,21 +465,15 @@ class SwarmManager:
 
         # 1. MasterBrain ALWAYS uses the high-tier Cloud model
         await self.spawn("MasterBrain", cloud_model, "director")
-        # 2. TrendSifter uses the default local model for high-speed market discovery
-        await self.spawn("TrendSifter", default_model, "mimic")
-
-        if is_power:
-            # 2. POWER MODE (12-CORE OPTIMIZED): Spawn the specialist coder
-            logger.info("[SWARM-INIT] POWER MODE (12-Core): Activating specialized coding node.")
-            await self.spawn("Dre", default_model, "coding")
-        elif not is_lite:
-            # 3. FULL SWARM: All systems go
-            await self.spawn("Dre", default_model, "coding")
-            await self.spawn("Fenko", default_model, "mimic")
-            await self.spawn("Codesmith", default_model, "coding")
-            await self.spawn("Ava", default_model, "reasoning")
-        else:
-            logger.info("[SWARM-INIT] LITE MODE active: Spawning minimal brain cluster (2 nodes).")
+        
+        # 2. Highly Specialized Local Nodes
+        await self.spawn("TrendSifter", default_model, "mimic")     # Market & Niche Discovery
+        await self.spawn("Architect", default_model, "reasoning")   # System Design & Planning
+        await self.spawn("Codesmith", default_model, "coding")      # Initial Code Generation
+        await self.spawn("LegalMind", default_model, "mimic")       # Compliance & Docs
+        await self.spawn("Fenko", default_model, "mimic")           # Security & Auditing
+        await self.spawn("Dre", default_model, "coding")            # Bug Fixing & Healing
+        await self.spawn("Ava", default_model, "reasoning")         # UX & Reverse Engineering
 
         # Load global directive
         with get_db() as db:
